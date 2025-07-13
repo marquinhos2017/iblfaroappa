@@ -16,6 +16,43 @@ body {
   overflow-x: hidden;
 }
 
+@keyframes badgeBump {
+  0% {
+    transform: scale(1);
+  }
+
+  30% {
+    transform: scale(1.4);
+  }
+
+  60% {
+    transform: scale(0.9);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  transform: scale(1);
+  transition: transform 0.3s ease;
+}
+
+.badge-animate {
+  animation: badgeBump 300ms ease-out;
+}
+
+
 body {
   color: var(--foreground);
   background: var(--background);

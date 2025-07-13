@@ -276,9 +276,36 @@ const EventosPage = () => {
             )}
 
             <div style={styles.appBar}>
-                <div style={styles.avatar}>
-                    {user.name.charAt(0).toUpperCase()}
+                <div
+                    style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        backgroundColor: '#6f68dd',
+                        color: 'white',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '18px',
+                        overflow: 'hidden',
+                    }}
+                >
+                    {user.photoUrl ? (
+                        <img
+                            src={user.photoUrl}
+                            alt="Foto do usuário"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                            }}
+                        />
+                    ) : (
+                        user.name.charAt(0).toUpperCase()
+                    )}
                 </div>
+
                 <div style={styles.userName}>{user.name}</div>
 
                 <div style={{
@@ -353,12 +380,25 @@ const EventosPage = () => {
                     </div>
                 )}
 
-                <h3 style={styles.subHeader}>
+                <h3 style={{ fontSize: '20px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     Eventos disponíveis{' '}
-                    <span style={styles.eventCountBadge}>
+                    <span
+                        style={{
+                            backgroundColor: '#6f68dd',
+                            color: 'white',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            display: 'inline-block',
+                            minWidth: '28px',
+                            textAlign: 'center',
+                        }}
+                    >
                         {eventosFiltrados.length}
                     </span>
                 </h3>
+
 
                 <ul style={styles.eventList}>
                     {eventosFiltrados.map(evento => (

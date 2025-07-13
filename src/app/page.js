@@ -5,7 +5,8 @@ import { FaTrash, FaMusic } from "react-icons/fa";
 import { useRouter } from "next/navigation"; import Loading from "@/components/loading";
 
 import { db } from "@/firebase/firebase"; // Ajuste o caminho conforme sua estrutura
-import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from "firebase/firestore";
+import Badge from "./Badge";
 export default function DeezerSearchPage() {
   const [loadingSavedSongs, setLoadingSavedSongs] = useState(true); // Adicione este estado
 
@@ -86,6 +87,11 @@ export default function DeezerSearchPage() {
     },
   };
 
+  useEffect(() => {
+    if (user?.user_id) {
+      loadSavedSongs();
+    }
+  }, [user?.user_id]); // Recarrega quando o user_id mudar
   // Verificar autenticação ao carregar a página
   useEffect(() => {
     audioRef.current.pause();
@@ -118,21 +124,22 @@ export default function DeezerSearchPage() {
   }, [router]);
   const loadSavedSongs = async () => {
     try {
-      setLoadingSavedSongs(true); // Ativa o estado de carregamento
-      const querySnapshot = await getDocs(collection(db, 'playlista'));
-      const songs = [];
-      querySnapshot.forEach((doc) => {
-        const songData = doc.data();
-        if (songData.user_id === user?.user_id) {
-          songs.push({ id: doc.id, ...songData });
-        }
-      });
+      setLoadingSavedSongs(true);
+      const q = query(
+        collection(db, 'playlista'),
+        where('user_id', '==', user?.user_id) // Filtra apenas as músicas do usuário logado
+      );
+      const querySnapshot = await getDocs(q);
+      const songs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       setSavedSongs(songs);
     } catch (error) {
-      console.error("Erro ao carregar músicas salvas:", error);
+      console.error("Erro ao carregar músicas:", error);
       alert("Erro ao carregar músicas salvas");
     } finally {
-      setLoadingSavedSongs(false); // Desativa o estado de carregamento
+      setLoadingSavedSongs(false);
     }
   };
 
@@ -378,22 +385,7 @@ export default function DeezerSearchPage() {
         </button>
 
         {!loadingSavedSongs && savedSongs.length > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              backgroundColor: 'red',
-              color: 'white',
-              borderRadius: '50%',
-              padding: '2px 6px',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              transform: 'translate(50%, -50%)',
-            }}
-          >
-            {savedSongs.length}
-          </span>
+          <Badge count={savedSongs.length} />
         )}
       </div>
 
