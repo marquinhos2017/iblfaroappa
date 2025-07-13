@@ -33,18 +33,6 @@ const EventosPage = () => {
     const [mesSelecionado, setMesSelecionado] = useState('');
 
     useEffect(() => {
-        // Verificar se estamos no cliente antes de acessar localStorage
-        if (typeof window !== 'undefined') {
-            const userData = JSON.parse(localStorage.getItem('user'));
-            if (!userData) {
-                router.push('/login');
-                return;
-            }
-            setUser(userData);
-        }
-    }, [router]);
-
-    useEffect(() => {
         // Injetar estilos globais apenas no lado do cliente
         if (typeof document !== 'undefined') {
             const style = document.createElement('style');
@@ -61,6 +49,18 @@ const EventosPage = () => {
             };
         }
     }, []);
+
+    useEffect(() => {
+        // Verificar se estamos no cliente antes de acessar localStorage
+        if (typeof window !== 'undefined') {
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (!userData) {
+                router.push('/login');
+                return;
+            }
+            setUser(userData);
+        }
+    }, [router]);
 
     useEffect(() => {
         const fetchEventos = async () => {
