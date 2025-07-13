@@ -1,9 +1,11 @@
+export const dynamic = 'force-dynamic';
 "use client";
 import React, { useEffect, useState } from 'react';
 
 import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { useRouter } from 'next/navigation';
+
 
 const injectGlobalStyles = () => {
     const style = document.createElement('style');
@@ -51,16 +53,32 @@ const EventosPage = () => {
     }, []);
 
     useEffect(() => {
-        // Verificar se estamos no cliente antes de acessar localStorage
-        if (typeof window !== 'undefined') {
+        // Mova TODA a lógica que depende do browser para este useEffect
+        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+            // 1. Verificação do usuário
             const userData = JSON.parse(localStorage.getItem('user'));
             if (!userData) {
                 router.push('/login');
                 return;
             }
             setUser(userData);
+
+            // 2. Injeção de estilos (se realmente necessário)
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            return () => {
+                document.head.removeChild(style);
+            };
         }
     }, [router]);
+
 
     useEffect(() => {
         const fetchEventos = async () => {
@@ -261,17 +279,54 @@ const EventosPage = () => {
                 </div>
                 <div style={styles.userName}>{user.name}</div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: 120 }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: '10px',
+                    maxWidth: '240px'
+                }}>
                     <button
-                        onClick={() => router.push('/')}  // Navega para "/"
-                        style={styles.faqButton}
+                        onClick={() => router.push('/')}
+                        className={styles.faqButton}
+                        style={{
+                            flex: 1,
+                            padding: '10px',
+                            fontSize: '16px',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderRadius: '6px',
+                            backgroundColor: 'black',
+                            color: 'white',
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
                     >
                         Playlist
                     </button>
-                    <button onClick={handleLogout} style={styles.logoutButton} title="Logout">
+
+                    <button
+                        onClick={handleLogout}
+                        className={styles.logoutButton}
+                        title="Logout"
+                        style={{
+                            flex: 1,
+                            padding: '10px',
+                            fontSize: '16px',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderRadius: '6px',
+                            backgroundColor: 'black',
+                            color: 'white',
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
                         🔒
                     </button>
                 </div>
+
 
 
 
