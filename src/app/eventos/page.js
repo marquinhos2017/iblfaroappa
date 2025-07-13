@@ -33,30 +33,33 @@ const EventosPage = () => {
     const [mesSelecionado, setMesSelecionado] = useState('');
 
     useEffect(() => {
-        // Obter usuário do localStorage ou de onde você armazena
-        const userData = JSON.parse(localStorage.getItem('user'));
-        if (!userData) {
-            router.push('/login');
-            return;
+        // Verificar se estamos no cliente antes de acessar localStorage
+        if (typeof window !== 'undefined') {
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (!userData) {
+                router.push('/login');
+                return;
+            }
+            setUser(userData);
         }
-        setUser(userData);
     }, [router]);
 
     useEffect(() => {
-        // Inject global styles only on client side
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
+        // Injetar estilos globais apenas no lado do cliente
+        if (typeof document !== 'undefined') {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
 
-        // Cleanup function
-        return () => {
-            document.head.removeChild(style);
-        };
+            return () => {
+                document.head.removeChild(style);
+            };
+        }
     }, []);
 
     useEffect(() => {
