@@ -43,6 +43,23 @@ const EventosPage = () => {
     }, [router]);
 
     useEffect(() => {
+        // Inject global styles only on client side
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Cleanup function
+        return () => {
+            document.head.removeChild(style);
+        };
+    }, []);
+
+    useEffect(() => {
         const fetchEventos = async () => {
             try {
                 const snapshot = await getDocs(collection(db, 'eventos'));

@@ -12,6 +12,29 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const router = useRouter();
 
+    // No topo do componente, antes do return
+    const bubbles = new Array(20).fill(null).map((_, index) => {
+        const left = Math.random() * 100; // % da tela
+        const size = Math.random() * 20 + 10; // tamanho entre 10px e 30px
+        const duration = Math.random() * 10 + 5; // duração entre 5s e 15s
+        const delay = Math.random() * 10; // atraso entre 0 e 10s
+
+        return (
+            <span
+                key={index}
+                className={styles.bubble}
+                style={{
+                    left: `${left}%`,
+                    width: `${size}px`,
+                    height: `${size}px`,
+                    animationDuration: `${duration}s`,
+                    animationDelay: `${delay}s`,
+                }}
+            />
+        );
+    });
+
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -71,6 +94,7 @@ export default function LoginPage() {
     };
 
     return (
+
         <div className={styles.page}>
             <div className={styles.container}>
                 <div className={styles.logo}>IBL Faro Music</div>
