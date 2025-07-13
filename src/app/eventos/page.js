@@ -36,6 +36,39 @@ const EventosPage = () => {
     const [mesesDisponiveis, setMesesDisponiveis] = useState([]);
     const [mesSelecionado, setMesSelecionado] = useState('');
 
+    const audioRef = useRef(null); // Alterado para null inicial
+
+    // Inicializa o Audio apenas no cliente
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            audioRef.current = new Audio();
+        }
+    }, []);
+
+    const togglePlay = (song) => {
+        if (!audioRef.current) return;
+
+        if (playingId === song.id) {
+            audioRef.current.pause();
+            setPlayingId(null);
+        } else {
+            audioRef.current.src = song.preview;
+            audioRef.current.play()
+                .then(() => setPlayingId(song.id))
+                .catch(error => console.error("Erro ao reproduzir áudio:", error));
+
+            audioRef.current.onended = () => setPlayingId(null);
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+        };
+    }, []);
+
     useEffect(() => {
         // Injetar estilos globais apenas no lado do cliente
         if (typeof document !== 'undefined') {
