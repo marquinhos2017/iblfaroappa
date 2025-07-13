@@ -88,11 +88,14 @@ export default function DeezerSearchPage() {
   };
 
   useEffect(() => {
+    // Só executa se user e user.user_id existirem
     if (user?.user_id) {
       loadSavedSongs();
+    } else {
+      setSavedSongs([]); // Limpa as músicas se não houver usuário
     }
-  }, [user?.user_id]); // Recarrega quando o user_id mudar
-  // Verificar autenticação ao carregar a página
+  }, [user?.user_id]); // Dependência apenas do user_id
+  // Verificar autenticação ao carregar a página 
   useEffect(() => {
     audioRef.current.pause();
 
@@ -106,6 +109,13 @@ export default function DeezerSearchPage() {
         router.replace('/login');
         return null;
       }
+
+      // Verifica se userData tem user_id
+      if (!userData.user_id) {
+        console.error("User data não contém user_id");
+        return null;
+      }
+
       return userData;
     };
 
@@ -125,18 +135,39 @@ export default function DeezerSearchPage() {
   const loadSavedSongs = async () => {
     try {
       setLoadingSavedSongs(true);
+
+      if (!user?.user_id) {
+        console.warn("User ID não disponível");
+        setSavedSongs([]);
+        return;
+      }
+
+      console.log("Buscando músicas para user_id:", user.user_id); // Debug
+
       const q = query(
         collection(db, 'playlista'),
-        where('user_id', '==', user?.user_id) // Filtra apenas as músicas do usuário logado
+        where('user_id', '==', user.user_id)
       );
+
       const querySnapshot = await getDocs(q);
-      const songs = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      console.log("Documentos encontrados:", querySnapshot.size); // Debug
+
+      const songs = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log("Dados do documento:", data); // Debug
+        return {
+          id: doc.id,
+          ...data
+        };
+      });
+
       setSavedSongs(songs);
     } catch (error) {
-      console.error("Erro ao carregar músicas:", error);
+      console.error("Erro detalhado ao carregar músicas:", {
+        error,
+        user: user,
+        userId: user?.user_id
+      });
       alert("Erro ao carregar músicas salvas");
     } finally {
       setLoadingSavedSongs(false);
