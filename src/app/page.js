@@ -12,7 +12,7 @@ export default function DeezerSearchPage() {
 
 
   const router = useRouter();
-  const audioRef = useRef(new Audio());
+  const audioRef = useRef(null);
   const [user, setUser] = useState(null);
   // Todos os hooks devem vir antes de qualquer lógica condicional
   const [authenticated, setAuthenticated] = useState(false);
@@ -86,6 +86,22 @@ export default function DeezerSearchPage() {
       fontFamily: 'Arial, sans-serif',
     },
   };
+
+  useEffect(() => {
+    // Initialize Audio only on client side
+    if (typeof window !== 'undefined') {
+      audioRef.current = new Audio();
+
+      // Cleanup function
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = '';
+          audioRef.current = null;
+        }
+      };
+    }
+  }, []);
 
   useEffect(() => {
     // Só executa se user e user.user_id existirem
