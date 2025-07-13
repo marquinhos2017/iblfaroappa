@@ -12,7 +12,8 @@ export default function DeezerSearchPage() {
 
 
   const router = useRouter();
-  const audioRef = useRef(null);
+
+  const audioRef = useRef(null); // Remove the HTMLAudioElement type
   const [user, setUser] = useState(null);
   // Todos os hooks devem vir antes de qualquer lógica condicional
   const [authenticated, setAuthenticated] = useState(false);
@@ -41,6 +42,25 @@ export default function DeezerSearchPage() {
       alert('Erro ao deletar música');
     }
   };
+
+  // Initialize audio safely
+  useEffect(() => {
+    // Only initialize on client side
+    if (typeof window !== 'undefined') {
+      // Correctly assign to the 'current' property
+      audioRef.current = new Audio();
+
+      // Cleanup function
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = '';
+          audioRef.current = null;
+        }
+      };
+    }
+  }, []);
+
   const [editSong, setEditSong] = useState({
     title: '',
     artist: '',
@@ -229,15 +249,22 @@ export default function DeezerSearchPage() {
   };
 
   const togglePlay = (song) => {
+    if (!audioRef.current) {
+      console.warn("Audio ref not initialized yet");
+      return;
+    }
+
     if (playingId === song.id) {
       audioRef.current.pause();
       setPlayingId(null);
     } else {
       audioRef.current.src = song.preview;
-      audioRef.current.play();
-      setPlayingId(song.id);
-
-      audioRef.current.onended = () => setPlayingId(null);
+      audioRef.current.play()
+        .then(() => setPlayingId(song.id))
+        .catch(error => {
+          console.error("Error playing audio:", error);
+          setPlayingId(null);
+        });
     }
   };
   useEffect(() => {

@@ -36,7 +36,7 @@ const EventosPage = () => {
     const [mesesDisponiveis, setMesesDisponiveis] = useState([]);
     const [mesSelecionado, setMesSelecionado] = useState('');
 
-    const audioRef = useRef(typeof window !== 'undefined' ? new Audio() : null);
+    const audioRef = useRef(null); // Alterado para null inicial
 
     // Inicializa o Audio apenas no cliente
     useEffect(() => {
