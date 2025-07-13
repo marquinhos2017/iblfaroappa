@@ -11,6 +11,7 @@ export default function DeezerSearchPage() {
   const [loadingSavedSongs, setLoadingSavedSongs] = useState(true); // Adicione este estado
 
 
+
   const router = useRouter();
 
   const audioRef = useRef(null); // Remove the HTMLAudioElement type
@@ -44,13 +45,11 @@ export default function DeezerSearchPage() {
   };
 
   // Initialize audio safely
+  // Inicializa o áudio no client-side
   useEffect(() => {
-    // Only initialize on client side
     if (typeof window !== 'undefined') {
-      // Correctly assign to the 'current' property
       audioRef.current = new Audio();
 
-      // Cleanup function
       return () => {
         if (audioRef.current) {
           audioRef.current.pause();
@@ -267,6 +266,8 @@ export default function DeezerSearchPage() {
         });
     }
   };
+  const [showSavedBadge, setShowSavedBadge] = useState(false);
+
   useEffect(() => {
     return () => {
       // Limpeza do áudio
@@ -485,6 +486,7 @@ export default function DeezerSearchPage() {
       </button>
     </div>
   );
+
   const saveToFirestore = async () => {
     if (!editSong.title?.trim() || !editSong.artist?.trim()) {
       alert('Por favor, preencha pelo menos o título e artista.');
@@ -505,11 +507,15 @@ export default function DeezerSearchPage() {
         createdAt: new Date()
       });
 
-      alert('Música salva com sucesso!');
+      //alert('Música salva com sucesso!');
       setIsModalOpen(false);
 
       // Atualiza a lista local de músicas salvas
       setSavedSongs(prev => [...prev, { id: docRef.id, ...editSong }]);
+      setShowSavedBadge(true);
+      setTimeout(() => {
+        setShowSavedBadge(false);
+      }, 2500);
     } catch (err) {
       console.error('Erro ao salvar música:', err);
       alert('Erro ao salvar música: ' + err.message);
@@ -832,7 +838,24 @@ export default function DeezerSearchPage() {
             </div>
           </div>
         )}
+        {showSavedBadge && (
+          <div style={{
+            position: 'fixed',
+            bottom: '100px',
+            right: '20px',
+            backgroundColor: 'black',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '30px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+            fontWeight: 'bold',
+            animation: 'fadeInOut 2.5s ease-in-out'
+          }}>
+            🎵 Música salva!
+          </div>
+        )}
       </div>
     </>
   );
+
 }

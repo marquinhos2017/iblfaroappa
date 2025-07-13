@@ -36,9 +36,7 @@ const EventosPage = () => {
     const [mesesDisponiveis, setMesesDisponiveis] = useState([]);
     const [mesSelecionado, setMesSelecionado] = useState('');
 
-    const audioRef = useRef(null); // Alterado para null inicial
-
-    // Inicializa o Audio apenas no cliente
+    const audioRef = useRef(null);
     useEffect(() => {
         if (typeof window !== 'undefined') {
             audioRef.current = new Audio();
@@ -70,7 +68,6 @@ const EventosPage = () => {
     }, []);
 
     useEffect(() => {
-        // Injetar estilos globais apenas no lado do cliente
         if (typeof document !== 'undefined') {
             const style = document.createElement('style');
             style.textContent = `
@@ -87,11 +84,27 @@ const EventosPage = () => {
         }
     }, []);
 
+
     useEffect(() => {
-        // Mova TODA a lógica que depende do browser para este useEffect
-        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-            // 1. Verificação do usuário
-            const userData = JSON.parse(localStorage.getItem('user'));
+        const checkAuth = () => {
+            if (typeof window === 'undefined') return null;
+
+            const userData = JSON.parse(localStorage.getItem('user') || 'null');
+            const token = localStorage.getItem('authToken');
+
+            if (!userData || !token) {
+                localStorage.removeItem('user');
+                localStorage.removeItem('authToken');
+                router.replace('/login');
+                return null;
+            }
+
+            return userData;
+        };
+
+        const userData = checkAuth();
+        if (userData) {
+            setUser(userData);
             if (!userData) {
                 router.push('/login');
                 return;
@@ -113,6 +126,8 @@ const EventosPage = () => {
             };
         }
     }, [router]);
+
+
 
 
     useEffect(() => {
