@@ -36,7 +36,7 @@ const EventosPage = () => {
     const [mesesDisponiveis, setMesesDisponiveis] = useState([]);
     const [mesSelecionado, setMesSelecionado] = useState('');
 
-    const audioRef = useRef(null); // Alterado para null inicial
+    const audioRef = useRef(typeof window !== 'undefined' ? new Audio() : null);
 
     // Inicializa o Audio apenas no cliente
     useEffect(() => {
@@ -417,7 +417,7 @@ const EventosPage = () => {
                     Eventos disponíveis{' '}
                     <span
                         style={{
-                            backgroundColor: '#6f68dd',
+                            backgroundColor: 'black',
                             color: 'white',
                             padding: '4px 10px',
                             borderRadius: '20px',
