@@ -16,11 +16,7 @@ const injectGlobalStyles = () => {
     document.head.appendChild(style);
 };
 
-useEffect(() => {
-    if (typeof document !== 'undefined') {
-        injectGlobalStyles();
-    }
-}, []);
+
 
 const EventosPage = () => {
     const router = useRouter();
