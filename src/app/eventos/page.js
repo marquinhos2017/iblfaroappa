@@ -1,13 +1,9 @@
-
-
 "use client";
-export const dynamic = 'force-dynamic';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { useRouter } from 'next/navigation';
-
 
 const injectGlobalStyles = () => {
     const style = document.createElement('style');
@@ -36,38 +32,8 @@ const EventosPage = () => {
     const [mesesDisponiveis, setMesesDisponiveis] = useState([]);
     const [mesSelecionado, setMesSelecionado] = useState('');
 
-    const audioRef = useRef(null);
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            audioRef.current = new Audio();
-        }
-    }, []);
-
-    const togglePlay = (song) => {
-        if (!audioRef.current) return;
-
-        if (playingId === song.id) {
-            audioRef.current.pause();
-            setPlayingId(null);
-        } else {
-            audioRef.current.src = song.preview;
-            audioRef.current.play()
-                .then(() => setPlayingId(song.id))
-                .catch(error => console.error("Erro ao reproduzir áudio:", error));
-
-            audioRef.current.onended = () => setPlayingId(null);
-        }
-    };
-
-    useEffect(() => {
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
-        };
-    }, []);
-
-    useEffect(() => {
+        // Injetar estilos globais apenas no lado do cliente
         if (typeof document !== 'undefined') {
             const style = document.createElement('style');
             style.textContent = `
@@ -84,51 +50,17 @@ const EventosPage = () => {
         }
     }, []);
 
-
     useEffect(() => {
-        const checkAuth = () => {
-            if (typeof window === 'undefined') return null;
-
-            const userData = JSON.parse(localStorage.getItem('user') || 'null');
-            const token = localStorage.getItem('authToken');
-
-            if (!userData || !token) {
-                localStorage.removeItem('user');
-                localStorage.removeItem('authToken');
-                router.replace('/login');
-                return null;
-            }
-
-            return userData;
-        };
-
-        const userData = checkAuth();
-        if (userData) {
-            setUser(userData);
+        // Verificar se estamos no cliente antes de acessar localStorage
+        if (typeof window !== 'undefined') {
+            const userData = JSON.parse(localStorage.getItem('user'));
             if (!userData) {
                 router.push('/login');
                 return;
             }
             setUser(userData);
-
-            // 2. Injeção de estilos (se realmente necessário)
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            `;
-            document.head.appendChild(style);
-
-            return () => {
-                document.head.removeChild(style);
-            };
         }
     }, [router]);
-
-
-
 
     useEffect(() => {
         const fetchEventos = async () => {
@@ -324,36 +256,9 @@ const EventosPage = () => {
             )}
 
             <div style={styles.appBar}>
-                <div
-                    style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        backgroundColor: '#6f68dd',
-                        color: 'white',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        fontWeight: 'bold',
-                        fontSize: '18px',
-                        overflow: 'hidden',
-                    }}
-                >
-                    {user.photoUrl ? (
-                        <img
-                            src={user.photoUrl}
-                            alt="Foto do usuário"
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                            }}
-                        />
-                    ) : (
-                        user.name.charAt(0).toUpperCase()
-                    )}
+                <div style={styles.avatar}>
+                    {user.name.charAt(0).toUpperCase()}
                 </div>
-
                 <div style={styles.userName}>{user.name}</div>
 
                 <div style={{
@@ -373,7 +278,7 @@ const EventosPage = () => {
                             justifyContent: 'center',
                             alignItems: 'center',
                             borderRadius: '6px',
-                            backgroundColor: 'black',
+                            backgroundColor: '#6f68dd',
                             color: 'white',
                             border: 'none',
                             cursor: 'pointer'
@@ -394,7 +299,7 @@ const EventosPage = () => {
                             justifyContent: 'center',
                             alignItems: 'center',
                             borderRadius: '6px',
-                            backgroundColor: 'black',
+                            backgroundColor: '#6f68dd',
                             color: 'white',
                             border: 'none',
                             cursor: 'pointer'
@@ -428,25 +333,12 @@ const EventosPage = () => {
                     </div>
                 )}
 
-                <h3 style={{ fontSize: '20px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h3 style={styles.subHeader}>
                     Eventos disponíveis{' '}
-                    <span
-                        style={{
-                            backgroundColor: 'black',
-                            color: 'white',
-                            padding: '4px 10px',
-                            borderRadius: '20px',
-                            fontSize: '14px',
-                            fontWeight: 'bold',
-                            display: 'inline-block',
-                            minWidth: '28px',
-                            textAlign: 'center',
-                        }}
-                    >
+                    <span style={styles.eventCountBadge}>
                         {eventosFiltrados.length}
                     </span>
                 </h3>
-
 
                 <ul style={styles.eventList}>
                     {eventosFiltrados.map(evento => (

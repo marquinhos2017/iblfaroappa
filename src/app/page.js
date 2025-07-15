@@ -11,10 +11,8 @@ export default function DeezerSearchPage() {
   const [loadingSavedSongs, setLoadingSavedSongs] = useState(true); // Adicione este estado
 
 
-
   const router = useRouter();
-
-  const audioRef = useRef(null); // Remove the HTMLAudioElement type
+  const audioRef = useRef(new Audio());
   const [user, setUser] = useState(null);
   // Todos os hooks devem vir antes de qualquer lógica condicional
   const [authenticated, setAuthenticated] = useState(false);
@@ -43,23 +41,6 @@ export default function DeezerSearchPage() {
       alert('Erro ao deletar música');
     }
   };
-
-  // Initialize audio safely
-  // Inicializa o áudio no client-side
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      audioRef.current = new Audio();
-
-      return () => {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = '';
-          audioRef.current = null;
-        }
-      };
-    }
-  }, []);
-
   const [editSong, setEditSong] = useState({
     title: '',
     artist: '',
@@ -107,29 +88,10 @@ export default function DeezerSearchPage() {
   };
 
   useEffect(() => {
-    // Initialize Audio only on client side
-    if (typeof window !== 'undefined') {
-      audioRef.current = new Audio();
-
-      // Cleanup function
-      return () => {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = '';
-          audioRef.current = null;
-        }
-      };
-    }
-  }, []);
-
-  useEffect(() => {
-    // Só executa se user e user.user_id existirem
     if (user?.user_id) {
       loadSavedSongs();
-    } else {
-      setSavedSongs([]); // Limpa as músicas se não houver usuário
     }
-  }, [user?.user_id]); // Dependência apenas do user_id
+  }, [user?.user_id]); // Recarrega quando o user_id mudar
   // Verificar autenticação ao carregar a página 
   useEffect(() => {
     audioRef.current.pause();
@@ -144,13 +106,6 @@ export default function DeezerSearchPage() {
         router.replace('/login');
         return null;
       }
-
-      // Verifica se userData tem user_id
-      if (!userData.user_id) {
-        console.error("User data não contém user_id");
-        return null;
-      }
-
       return userData;
     };
 
@@ -170,39 +125,18 @@ export default function DeezerSearchPage() {
   const loadSavedSongs = async () => {
     try {
       setLoadingSavedSongs(true);
-
-      if (!user?.user_id) {
-        console.warn("User ID não disponível");
-        setSavedSongs([]);
-        return;
-      }
-
-      console.log("Buscando músicas para user_id:", user.user_id); // Debug
-
       const q = query(
         collection(db, 'playlista'),
-        where('user_id', '==', user.user_id)
+        where('user_id', '==', user?.user_id) // Filtra apenas as músicas do usuário logado
       );
-
       const querySnapshot = await getDocs(q);
-      console.log("Documentos encontrados:", querySnapshot.size); // Debug
-
-      const songs = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        console.log("Dados do documento:", data); // Debug
-        return {
-          id: doc.id,
-          ...data
-        };
-      });
-
+      const songs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       setSavedSongs(songs);
     } catch (error) {
-      console.error("Erro detalhado ao carregar músicas:", {
-        error,
-        user: user,
-        userId: user?.user_id
-      });
+      console.error("Erro ao carregar músicas:", error);
       alert("Erro ao carregar músicas salvas");
     } finally {
       setLoadingSavedSongs(false);
@@ -248,26 +182,17 @@ export default function DeezerSearchPage() {
   };
 
   const togglePlay = (song) => {
-    if (!audioRef.current) {
-      console.warn("Audio ref not initialized yet");
-      return;
-    }
-
     if (playingId === song.id) {
       audioRef.current.pause();
       setPlayingId(null);
     } else {
       audioRef.current.src = song.preview;
-      audioRef.current.play()
-        .then(() => setPlayingId(song.id))
-        .catch(error => {
-          console.error("Error playing audio:", error);
-          setPlayingId(null);
-        });
+      audioRef.current.play();
+      setPlayingId(song.id);
+
+      audioRef.current.onended = () => setPlayingId(null);
     }
   };
-  const [showSavedBadge, setShowSavedBadge] = useState(false);
-
   useEffect(() => {
     return () => {
       // Limpeza do áudio
@@ -486,7 +411,6 @@ export default function DeezerSearchPage() {
       </button>
     </div>
   );
-
   const saveToFirestore = async () => {
     if (!editSong.title?.trim() || !editSong.artist?.trim()) {
       alert('Por favor, preencha pelo menos o título e artista.');
@@ -507,15 +431,11 @@ export default function DeezerSearchPage() {
         createdAt: new Date()
       });
 
-      //alert('Música salva com sucesso!');
+      alert('Música salva com sucesso!');
       setIsModalOpen(false);
 
       // Atualiza a lista local de músicas salvas
       setSavedSongs(prev => [...prev, { id: docRef.id, ...editSong }]);
-      setShowSavedBadge(true);
-      setTimeout(() => {
-        setShowSavedBadge(false);
-      }, 2500);
     } catch (err) {
       console.error('Erro ao salvar música:', err);
       alert('Erro ao salvar música: ' + err.message);
@@ -838,24 +758,7 @@ export default function DeezerSearchPage() {
             </div>
           </div>
         )}
-        {showSavedBadge && (
-          <div style={{
-            position: 'fixed',
-            bottom: '100px',
-            right: '20px',
-            backgroundColor: 'black',
-            color: 'white',
-            padding: '12px 20px',
-            borderRadius: '30px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-            fontWeight: 'bold',
-            animation: 'fadeInOut 2.5s ease-in-out'
-          }}>
-            🎵 Música salva!
-          </div>
-        )}
       </div>
     </>
   );
-
 }
