@@ -135,25 +135,42 @@ export default function DeezerSearchPage() {
   }, [router]);
   const loadSavedSongs = async () => {
     try {
+      // Verifica se o usuário está autenticado e tem um ID
+      if (!user?.user_id) {
+        console.error("Usuário não autenticado ou ID inválido");
+        return;
+      }
+
       setLoadingSavedSongs(true);
+
       const q = query(
         collection(db, 'playlista'),
-        where('user_id', '==', user?.user_id)
+        where('user_id', '==', user.user_id)
       );
+
       const querySnapshot = await getDocs(q);
       const songs = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+
       setSavedSongs(songs);
     } catch (error) {
-      console.error("Erro ao carregar músicas:", error);
-      alert("Erro ao carregar músicas salvas");
+      console.error("Erro detalhado ao carregar músicas:", error);
+
+      // Mostra mensagem mais específica
+      let errorMessage = "Erro ao carregar músicas salvas";
+      if (error.code === 'permission-denied') {
+        errorMessage = "Você não tem permissão para acessar estas músicas";
+      } else if (error.code === 'unavailable') {
+        errorMessage = "Serviço indisponível. Tente novamente mais tarde";
+      }
+
+      alert(errorMessage);
     } finally {
       setLoadingSavedSongs(false);
     }
   };
-
 
   const bottomSheetStyles = {
     container: {
