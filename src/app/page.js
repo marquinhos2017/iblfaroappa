@@ -8,13 +8,10 @@ import { db } from "@/firebase/firebase"; // Ajuste o caminho conforme sua estru
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from "firebase/firestore";
 import Badge from "./Badge";
 export default function DeezerSearchPage() {
-  const [loadingSavedSongs, setLoadingSavedSongs] = useState(true); // Adicione este estado
-
-
+  const [loadingSavedSongs, setLoadingSavedSongs] = useState(true);
   const router = useRouter();
-  const audioRef = useRef(new Audio());
+  const audioRef = useRef(null); // Initialize as null
   const [user, setUser] = useState(null);
-  // Todos os hooks devem vir antes de qualquer lógica condicional
   const [authenticated, setAuthenticated] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [savingId, setSavingId] = useState(null);
@@ -22,10 +19,20 @@ export default function DeezerSearchPage() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [playingId, setPlayingId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false); const [savedSongs, setSavedSongs] = useState([]); // Estado para músicas salvas
-  const [showSavedSongs, setShowSavedSongs] = useState(false
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [savedSongs, setSavedSongs] = useState([]);
+  const [showSavedSongs, setShowSavedSongs] = useState(false);
+  const [editSong, setEditSong] = useState({
+    title: '',
+    artist: '',
+    album: '',
+    preview: '',
+    cover: '',
+    deezer_link: '',
+    youtube_link: '',
+  });
 
-  ); // Estado para controlar o Botto
+  // Estado para controlar o Botto
   const deleteSongFromDatabase = async (songId) => {
     try {
       if (window.confirm(`Tem certeza que deseja deletar esta música?`)) {
@@ -41,15 +48,7 @@ export default function DeezerSearchPage() {
       alert('Erro ao deletar música');
     }
   };
-  const [editSong, setEditSong] = useState({
-    title: '',
-    artist: '',
-    album: '',
-    preview: '',
-    cover: '',
-    deezer_link: '',
-    youtube_link: '',
-  });
+
 
   const styles = {
 
@@ -88,15 +87,24 @@ export default function DeezerSearchPage() {
   };
 
   useEffect(() => {
+    audioRef.current = typeof Audio !== 'undefined' ? new Audio() : null;
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (user?.user_id) {
       loadSavedSongs();
     }
-  }, [user?.user_id]); // Recarrega quando o user_id mudar
+  }, [user?.user_id]);
   // Verificar autenticação ao carregar a página 
   useEffect(() => {
-    audioRef.current.pause();
-
     const checkAuth = () => {
+      if (typeof window === 'undefined') return null;
+
       const userData = JSON.parse(localStorage.getItem('user'));
       const token = localStorage.getItem('authToken');
 
@@ -114,11 +122,14 @@ export default function DeezerSearchPage() {
       setUser(userData);
       setAuthenticated(true);
       setLoadingAuth(false);
-      loadSavedSongs(); // Já está aqui, mas agora com o loading
+      loadSavedSongs();
 
-      const avatar = document.querySelector('[data-avatar]');
-      if (avatar && userData.name) {
-        avatar.textContent = userData.name.charAt(0).toUpperCase();
+      // Move DOM access to client-side only
+      if (typeof document !== 'undefined') {
+        const avatar = document.querySelector('[data-avatar]');
+        if (avatar && userData.name) {
+          avatar.textContent = userData.name.charAt(0).toUpperCase();
+        }
       }
     }
   }, [router]);
@@ -127,7 +138,7 @@ export default function DeezerSearchPage() {
       setLoadingSavedSongs(true);
       const q = query(
         collection(db, 'playlista'),
-        where('user_id', '==', user?.user_id) // Filtra apenas as músicas do usuário logado
+        where('user_id', '==', user?.user_id)
       );
       const querySnapshot = await getDocs(q);
       const songs = querySnapshot.docs.map(doc => ({
@@ -182,13 +193,16 @@ export default function DeezerSearchPage() {
   };
 
   const togglePlay = (song) => {
+    if (!audioRef.current) return;
+
     if (playingId === song.id) {
       audioRef.current.pause();
       setPlayingId(null);
     } else {
       audioRef.current.src = song.preview;
-      audioRef.current.play();
-      setPlayingId(song.id);
+      audioRef.current.play()
+        .then(() => setPlayingId(song.id))
+        .catch(error => console.error("Error playing audio:", error));
 
       audioRef.current.onended = () => setPlayingId(null);
     }
