@@ -51,7 +51,7 @@ const EventosPage = () => {
     }, []);
 
     useEffect(() => {
-        // Verificar se estamos no cliente antes de acessar localStorage
+        // Verificar autenticação apenas no cliente
         if (typeof window !== 'undefined') {
             const userData = JSON.parse(localStorage.getItem('user'));
             if (!userData) {
@@ -63,8 +63,11 @@ const EventosPage = () => {
     }, [router]);
 
     useEffect(() => {
-        const fetchEventos = async () => {
+        if (!user) return;
+
+        const fetchData = async () => {
             try {
+                // Buscar eventos
                 const snapshot = await getDocs(collection(db, 'eventos'));
                 const eventosData = snapshot.docs.map(doc => {
                     const data = doc.data();
@@ -109,22 +112,14 @@ const EventosPage = () => {
                     setMesSelecionado(mesesUnicos[0].valor);
                 }
 
-            } catch (error) {
-                console.error('Erro ao buscar eventos:', error);
-            }
-        };
-
-        const fetchRespostasExistentes = async () => {
-            if (!user?.user_id) return;
-
-            try {
+                // Buscar respostas existentes
                 const q = query(
                     collection(db, 'disponibilidades'),
                     where('musicoId', '==', user.user_id)
                 );
-                const snapshot = await getDocs(q);
+                const respostaSnapshot = await getDocs(q);
                 const respostas = {};
-                snapshot.forEach(docSnap => {
+                respostaSnapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     respostas[data.eventoId] = {
                         idDoc: docSnap.id,
@@ -138,15 +133,14 @@ const EventosPage = () => {
                     )
                 );
             } catch (error) {
-                console.error('Erro ao buscar respostas existentes:', error);
+                console.error('Erro ao buscar dados:', error);
+            } finally {
+                setLoading(false);
             }
         };
 
-        if (user) {
-            fetchEventos();
-            fetchRespostasExistentes();
-        }
-    }, [user?.user_id]);
+        fetchData();
+    }, [user]);
 
     useEffect(() => {
         if (mesSelecionado) {
