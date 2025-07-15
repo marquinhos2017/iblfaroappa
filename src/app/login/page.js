@@ -12,53 +12,30 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const router = useRouter();
 
-    // No topo do componente, antes do return
-    const bubbles = new Array(20).fill(null).map((_, index) => {
-        const left = Math.random() * 100; // % da tela
-        const size = Math.random() * 20 + 10; // tamanho entre 10px e 30px
-        const duration = Math.random() * 10 + 5; // duração entre 5s e 15s
-        const delay = Math.random() * 10; // atraso entre 0 e 10s
-
-        return (
-            <span
-                key={index}
-                className={styles.bubble}
-                style={{
-                    left: `${left}%`,
-                    width: `${size}px`,
-                    height: `${size}px`,
-                    animationDuration: `${duration}s`,
-                    animationDelay: `${delay}s`,
-                }}
-            />
-        );
-    });
-
-
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
-            // Login admin
-            if (email === 'admin@admin' && password === 'admin') {
+            // Login admin - ATUALIZADO para admin@admin.com
+            if (email === 'admin@admin.com' && password === 'admin') {
                 const userData = {
                     name: 'Admin',
                     user_id: 'admin-id',
-                    email: 'admin@admin',
+                    email: 'admin@admin.com',
                     role: 'admin'
                 };
-                // Armazena tanto user quanto authToken
+
                 localStorage.setItem('authToken', 'admin-token');
                 localStorage.setItem('user', JSON.stringify(userData));
 
-                // Força recarregamento completo
-                window.location.href = '/admin';
+                // Usar router.push em vez de window.location.href
+                router.push('/admin');
                 return;
             }
 
-            // Verificação no Firebase
+            // Verificação no Firebase para usuários normais
             const q = query(
                 collection(db, 'musicos'),
                 where('email', '==', email),
@@ -75,15 +52,13 @@ export default function LoginPage() {
             const userData = {
                 id: userDoc.id,
                 ...userDoc.data(),
-                role: 'user' // Adiciona role padrão
+                role: 'user'
             };
 
-            // Armazena ambos os itens necessários
-            localStorage.setItem('authToken', 'user-token'); // Token genérico
+            localStorage.setItem('authToken', 'user-token');
             localStorage.setItem('user', JSON.stringify(userData));
 
-            // Redirecionamento forçado com recarregamento
-            window.location.href = '/eventos';
+            router.push('/eventos');
 
         } catch (error) {
             console.error('Erro no login:', error);
@@ -94,7 +69,6 @@ export default function LoginPage() {
     };
 
     return (
-
         <div className={styles.page}>
             <div className={styles.container}>
                 <div className={styles.logo}>IBL Faro Music</div>

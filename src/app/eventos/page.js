@@ -272,9 +272,9 @@ const EventosPage = () => {
                             justifyContent: 'center',
                             alignItems: 'center',
                             borderRadius: '6px',
-                            backgroundColor: '#6f68dd',
-                            color: 'white',
-                            border: 'none',
+                            backgroundColor: '#000000', // preto
+                            color: '#ffffff',           // branco
+                            border: '1px solid #ffffff',
                             cursor: 'pointer'
                         }}
                     >
@@ -293,14 +293,15 @@ const EventosPage = () => {
                             justifyContent: 'center',
                             alignItems: 'center',
                             borderRadius: '6px',
-                            backgroundColor: '#6f68dd',
-                            color: 'white',
-                            border: 'none',
+                            backgroundColor: '#000000', // preto
+                            color: '#ffffff',           // branco
+                            border: '1px solid #ffffff',
                             cursor: 'pointer'
                         }}
                     >
                         🔒
                     </button>
+
                 </div>
 
 

@@ -1,0 +1,395 @@
+.container {
+    max-width: 100%;
+    padding: 0;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+}
+
+.header {
+    background-color: black;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.titleIcon {
+    font-size: 1.5rem;
+}
+
+.headerActions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.iconButton {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.iconButton:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Adicione aqui todos os outros estilos necessários */
+
+
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* fundo escuro semi-transparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.modalContent {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+    position: relative;
+}
+
+.formTitle {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.formGroup {
+    margin-bottom: 1rem;
+}
+
+.input,
+.datePicker {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.formButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.primaryButton {
+    background-color: #6f68dd;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.secondaryButton {
+    background-color: transparent;
+    color: #333;
+    border: 1px solid #aaa;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+
+/* Container da seção */
+.section {
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    margin-top: 2rem;
+}
+
+/* Título da seção */
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #222;
+    gap: 0.5rem;
+}
+
+.sectionIcon {
+    color: #6f68dd;
+    font-size: 1.4rem;
+}
+
+/* Lista de eventos */
+.eventList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Mensagem quando não há eventos */
+.emptyMessage {
+    font-style: italic;
+    color: #888;
+}
+
+/* Card de evento */
+.eventCard {
+    display: flex;
+    flex-direction: column;
+    background-color: #f9f9fb;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.eventCard:hover {
+    background-color: #f0efff;
+    box-shadow: 0 2px 8px rgba(111, 104, 221, 0.1);
+}
+
+/* Card selecionado */
+.selectedEvent {
+    border: 2px solid #6f68dd;
+    background-color: #f4f3ff;
+}
+
+/* Informações do evento */
+.eventInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.eventName {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.eventDate {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* Ações: lixeira e seta */
+.eventActions {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.deleteButton {
+    background: none;
+    border: none;
+    color: #c0392b;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.deleteButton:hover {
+    transform: scale(1.1);
+}
+
+.arrowIcon {
+    transition: transform 0.3s ease;
+    color: #333;
+}
+
+.rotated {
+    transform: rotate(180deg);
+}
+
+/* Dropdown de disponibilidades */
+.availabilityDropdown {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #ccc;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.availabilityHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.availabilityIcon {
+    color: #6f68dd;
+}
+
+.availabilityItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+    color: #444;
+}
+
+.statusIcon {
+    font-size: 1rem;
+}
+
+.available {
+    color: #2ecc71;
+}
+
+.unavailable {
+    color: #e74c3c;
+}
+
+.userEmail {
+    font-family: monospace;
+}
+
+.eventTopRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* .eventInfo e .eventActions podem manter os estilos que você já usa, apenas com isso: */
+
+.eventInfo {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.eventWrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* O card em si */
+.eventCard {
+    flex: 1;
+    background-color: #f7f7f9;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.eventCard:hover {
+    background-color: #f0f0f5;
+}
+
+/* Botão de deletar fora do card */
+.deleteButtonOutside {
+    background: #ffeded;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.deleteButtonOutside:hover {
+    background: #ffd3d3;
+}
+
+/* Adicione estas classes no seu arquivo CSS */
+.skeletonItem {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.skeletonIcon {
+    width: 20px;
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 50%;
+    margin-right: 0.75rem;
+}
+
+.skeletonText {
+    height: 16px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    width: 120px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.eventCard {
+    transition: opacity 0.3s ease;
+    opacity: 1;
+}
+
+.fadeOut {
+    opacity: 0;
+}
