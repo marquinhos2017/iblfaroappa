@@ -18,9 +18,12 @@ export default function DeezerSearchPage() {
   const router = useRouter();
   const audioRef = useRef(null); // Initialize as null
   const [user, setUser] = useState(() => {
-    // Inicializa o estado user a partir do localStorage no carregamento
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
+    // Only access localStorage when window is available
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    }
+    return null;
   });
   const [newPassword, setNewPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
@@ -95,13 +98,15 @@ export default function DeezerSearchPage() {
         if (userSnap.exists()) {
           const usuarioAtualizado = userSnap.data();
 
-          const userStorage = JSON.parse(localStorage.getItem('user')) || {};
-          const novoUserStorage = {
-            ...userStorage,
-            name: usuarioAtualizado.name,
-            password: usuarioAtualizado.password, // Se quiser armazenar senha (atenção a segurança!)
-          };
-          localStorage.setItem('user', JSON.stringify(novoUserStorage));
+          if (typeof window !== 'undefined') {
+            const userStorage = JSON.parse(localStorage.getItem('user')) || {};
+            const novoUserStorage = {
+              ...userStorage,
+              name: usuarioAtualizado.name,
+              password: usuarioAtualizado.password,
+            };
+            localStorage.setItem('user', JSON.stringify(novoUserStorage));
+          }
         }
       }
 
@@ -366,6 +371,7 @@ export default function DeezerSearchPage() {
   // Verificar autenticação ao carregar a página 
   useEffect(() => {
     const checkAuth = () => {
+      // Only run on client side
       if (typeof window === 'undefined') return null;
 
       const userData = JSON.parse(localStorage.getItem('user'));
