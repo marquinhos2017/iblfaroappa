@@ -1,9 +1,12 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 
-import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { useRouter } from 'next/navigation';
+import { FiLogOut, FiTrash2, FiCalendar, FiChevronDown, FiUsers, FiMail, FiPlus, FiAirplay, FiX, FiPackage } from 'react-icons/fi';
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const injectGlobalStyles = () => {
     const style = document.createElement('style');
@@ -19,6 +22,94 @@ const injectGlobalStyles = () => {
 
 
 const EventosPage = () => {
+
+    async function adicionarEventosDomingosAgosto() {
+        const year = 2025;
+        const month = 7; // agosto (0-based)
+
+        let domingos = [];
+
+        for (let day = 1; day <= 31; day++) {
+            const date = new Date(year, month, day);
+            if (date.getMonth() !== month) break;
+
+            if (date.getDay() === 0) { // domingo
+                domingos.push(new Date(date)); // copiar a data
+            }
+        }
+
+        const eventosRef = collection(db, 'eventos');
+
+        for (const domingo of domingos) {
+            // Evento 1: 10:00
+            const eventoManha = new Date(domingo);
+            eventoManha.setHours(10, 0, 0, 0);
+
+            // Evento 2: 19:30
+            const eventoNoite = new Date(domingo);
+            eventoNoite.setHours(19, 30, 0, 0);
+
+            // Adiciona no Firestore os dois eventos
+            await addDoc(eventosRef, {
+                name: "Culto de Celebração",
+                date: Timestamp.fromDate(eventoManha),
+                createdAt: Timestamp.now(),
+                dateFormatted: format(eventoManha, "EEEE, d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR }),
+            });
+
+            await addDoc(eventosRef, {
+                name: "Culto de Celebração",
+                date: Timestamp.fromDate(eventoNoite),
+                createdAt: Timestamp.now(),
+                dateFormatted: format(eventoNoite, "EEEE, d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR }),
+            });
+        }
+
+        return "Eventos de domingo adicionados com sucesso!";
+    }
+
+
+    async function adicionarEventosQuartasAgosto() {
+        const year = 2025;
+        const month = 7; // em JS Date, mês é 0-based, agosto = 7
+
+        let quartas = [];
+
+        for (let day = 1; day <= 31; day++) {
+            const date = new Date(year, month, day);
+
+            if (date.getMonth() !== month) break;
+
+            if (date.getDay() === 3) { // quarta-feira (domingo=0,...,quarta=3)
+                // Setar horário 20:00
+                date.setHours(20, 0, 0, 0);
+                quartas.push(date);
+            }
+        }
+
+        const eventosRef = collection(db, 'eventos');
+
+        for (const dataEvento of quartas) {
+            await addDoc(eventosRef, {
+                name: "Culto Fé",
+                date: Timestamp.fromDate(dataEvento),
+                createdAt: Timestamp.now(),
+                dateFormatted: format(dataEvento, "EEEE, d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR }),
+            });
+        }
+
+        return 'Eventos adicionados com sucesso!';
+    }
+    const [mensagem, setMensagem] = useState('');
+    async function handleClick() {
+        try {
+            const resultado = await adicionarEventosQuartasAgosto();
+            const a = await adicionarEventosDomingosAgosto();
+            setMensagem(resultado);
+        } catch (error) {
+            setMensagem('Erro: ' + error.message);
+        }
+    }
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [eventos, setEventos] = useState([]);
@@ -249,65 +340,49 @@ const EventosPage = () => {
                 </button>
             )}
 
-            <div style={styles.appBar}>
-                <div style={styles.avatar}>
-                    {user.name.charAt(0).toUpperCase()}
-                </div>
-                <div style={styles.userName}>{user.name}</div>
+            <header style={styles.appBar}>
+                <h1 style={styles.title}>
+                    <FiAirplay style={styles.titleIcon} />
 
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    gap: '10px',
-                    maxWidth: '240px'
-                }}>
+                </h1>
+                {/*
+                <div>
+                    <button onClick={handleClick}>
+                        Adicionar eventos quartas de agosto
+                    </button>
+                    {mensagem && <p>{mensagem}</p>}
+                </div>
+                <div>
+                    <button onClick={handleClick}>Adicionar eventos domingos de agosto</button>
+                    {mensagem && <p>{mensagem}</p>}
+                </div>*/}
+
+                <div style={styles.headerActions}>
+                    <div style={styles.userBadge}>
+                        <div style={styles.avatar}>
+                            {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>{user.name}</div>
+                    </div>
+
                     <button
                         onClick={() => router.push('/')}
-                        className={styles.faqButton}
-                        style={{
-                            flex: 1,
-                            padding: '10px',
-                            fontSize: '16px',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            borderRadius: '6px',
-                            backgroundColor: '#000000', // preto
-                            color: '#ffffff',           // branco
-                            border: '1px solid #ffffff',
-                            cursor: 'pointer'
-                        }}
+                        title="Playlist"
+                        style={styles.iconButton}
                     >
-                        Playlist
+                        <FiPlus size={20} />
                     </button>
 
                     <button
                         onClick={handleLogout}
-                        className={styles.logoutButton}
                         title="Logout"
-                        style={{
-                            flex: 1,
-                            padding: '10px',
-                            fontSize: '16px',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            borderRadius: '6px',
-                            backgroundColor: '#000000', // preto
-                            color: '#ffffff',           // branco
-                            border: '1px solid #ffffff',
-                            cursor: 'pointer'
-                        }}
+                        style={styles.iconButton}
                     >
-                        🔒
+                        <FiLogOut size={20} />
                     </button>
-
                 </div>
+            </header>
 
-
-
-
-            </div>
 
 
             <div style={styles.container}>
@@ -572,6 +647,61 @@ const styles = {
         marginTop: '40px',
         fontSize: '18px',
     },
+    appBar: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 20px',
+        backgroundColor: 'black',
+        color: 'white',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+    },
+    title: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '20px',
+        gap: '10px',
+    },
+    titleIcon: {
+        fontSize: '24px',
+    },
+    headerActions: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+    },
+    iconButton: {
+        padding: '8px 10px',
+        borderRadius: '6px',
+        backgroundColor: '#000',
+        color: '#fff',
+        border: '1px solid #fff',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    userBadge: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginRight: '10px',
+    },
+    avatar: {
+        width: '32px',
+        height: '32px',
+        borderRadius: '50%',
+        backgroundColor: '#f6f6f8',
+        color: '#000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 'bold',
+    },
+
 };
 
 export default EventosPage;

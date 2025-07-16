@@ -58,7 +58,10 @@ export default function LoginPage() {
             localStorage.setItem('authToken', 'user-token');
             localStorage.setItem('user', JSON.stringify(userData));
 
-            router.push('/eventos');
+            router.push('/eventos').then(() => {
+                // Forçar um reload para garantir que o localStorage seja lido
+                window.location.reload();
+            });
 
         } catch (error) {
             console.error('Erro no login:', error);
