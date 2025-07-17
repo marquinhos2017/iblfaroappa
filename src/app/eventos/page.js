@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
@@ -22,6 +22,8 @@ const injectGlobalStyles = () => {
 
 
 const EventosPage = () => {
+
+
 
     async function adicionarEventosDomingosAgosto() {
         const year = 2025;
@@ -140,7 +142,7 @@ const EventosPage = () => {
             };
         }
     }, []);
-
+    const [loadinga, setLoadinga] = useState(true);
     useEffect(() => {
         // Verificar autenticação apenas no cliente
         if (typeof window !== 'undefined') {
@@ -158,6 +160,8 @@ const EventosPage = () => {
 
         const fetchData = async () => {
             try {
+                setLoadinga(false); // Já existe no seu código
+                const startTime = Date.now(); // Marca o início do carregamento
                 // Buscar eventos
                 const snapshot = await getDocs(collection(db, 'eventos'));
                 const eventosData = snapshot.docs.map(doc => {
@@ -223,16 +227,45 @@ const EventosPage = () => {
                         Object.entries(respostas).map(([eventoId, { status }]) => [eventoId, status])
                     )
                 );
+
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(1000 - elapsed, 0);
+
+                setTimeout(() => {
+                    setLoading(false);
+                    setMinLoadingComplete(true);
+                }, remaining);
+
+
             } catch (error) {
                 console.error('Erro ao buscar dados:', error);
             } finally {
                 setLoading(false);
+                setLoadinga(false); // Já existe no seu código
+                setMinLoadingComplete(true);
             }
         };
 
         fetchData();
     }, [user]);
 
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    // Fecha dropdown ao clicar fora
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedLabel = mesSelecionado
+        ? mesesDisponiveis.find(m => m.valor === mesSelecionado)?.label
+        : 'Todos os meses';
     useEffect(() => {
         if (mesSelecionado) {
             const filtrados = eventos.filter(evento => evento.mesAno === mesSelecionado);
@@ -308,6 +341,16 @@ const EventosPage = () => {
     const hasDisponibilidade = Object.keys(disponibilidade).length > 0;
 
     if (!user) return <p style={styles.centerText}>Carregando...</p>;
+
+    if (loadinga) {
+        return (
+            <div style={styles.loadingContainer}>
+                <div style={styles.spinner}></div>
+                <p style={styles.loadingText}>Carregando eventos...</p>
+            </div>
+        );
+    }
+
 
     return (
         <>
@@ -387,19 +430,36 @@ const EventosPage = () => {
 
             <div style={styles.container}>
                 {mesesDisponiveis.length > 0 && (
-                    <div style={styles.dropdownContainer}>
-                        <select
-                            value={mesSelecionado}
-                            onChange={(e) => setMesSelecionado(e.target.value)}
-                            style={styles.dropdown}
-                        >
-                            <option value="">Todos os meses</option>
-                            {mesesDisponiveis.map(mes => (
-                                <option key={mes.valor} value={mes.valor}>
-                                    {mes.label}
-                                </option>
-                            ))}
-                        </select>
+                    <div style={styles.dropdownContainer} ref={containerRef}>
+                        <div style={styles.dropdownHeader} onClick={() => setOpen(!open)}>
+                            {selectedLabel}
+                            <span style={styles.arrow}>{open ? '▲' : '▼'}</span>
+                        </div>
+                        {open && (
+                            <div style={styles.dropdownList}>
+                                <div
+                                    style={mesSelecionado === '' ? styles.dropdownItemSelected : styles.dropdownItem}
+                                    onClick={() => {
+                                        setMesSelecionado('');
+                                        setOpen(false);
+                                    }}
+                                >
+                                    Todos os meses
+                                </div>
+                                {mesesDisponiveis.map((mes) => (
+                                    <div
+                                        key={mes.valor}
+                                        style={mesSelecionado === mes.valor ? styles.dropdownItemSelected : styles.dropdownItem}
+                                        onClick={() => {
+                                            setMesSelecionado(mes.valor);
+                                            setOpen(false);
+                                        }}
+                                    >
+                                        {mes.label}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -518,16 +578,19 @@ const styles = {
         backgroundColor: 'black',
         color: 'white',
         borderRadius: '50%',
-        padding: '6px 6px',
-        fontSize: '8',
+        padding: '0',              // Remover padding, vamos controlar tamanho via width/height
+        fontSize: '12px',          // Ajuste para um tamanho legível (você usava '8', sem unidade)
         fontWeight: 'bold',
-        minWidth: '20px',
-        height: '20px',
+        minWidth: '20px',          // largura mínima
+        height: '20px',            // altura fixa para círculo
+        width: '20px',             // largura fixa igual à altura para círculo perfeito
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-    },
+        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+        userSelect: 'none',        // evita seleção do número ao clicar
+    }
+    ,
     eventList: {
         listStyle: 'none',
         padding: 0,
@@ -613,6 +676,29 @@ const styles = {
         color: '#4CAF50',
         marginBottom: '15px',
     },
+
+    loadingContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        backgroundColor: '#f5f5f5',
+    },
+    loadingText: {
+        marginTop: '20px',
+        fontSize: '18px',
+        color: '#555',
+    },
+    spinner: {
+        border: '4px solid rgba(0, 0, 0, 0.1)',
+        width: '36px',
+        height: '36px',
+        borderRadius: '50%',
+        borderLeftColor: '#09f',
+        animation: 'spin 1s linear infinite',
+    },
+    // ... outros estilos ...
     successMessage: {
         color: '#4CAF50',
         fontWeight: 'bold',
@@ -699,6 +785,57 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        fontWeight: 'bold',
+    },
+
+    dropdownContainer: {
+        width: '100%',
+        maxWidth: '360px',
+        marginBottom: '20px',
+        position: 'relative',
+        userSelect: 'none',
+    },
+    dropdownHeader: {
+        padding: '10px 14px',
+        borderRadius: '8px',
+        border: '1px solid #ddd',
+        fontSize: '16px',
+        backgroundColor: 'white',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        cursor: 'pointer',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    arrow: {
+        marginLeft: '10px',
+        fontSize: '12px',
+        color: '#888',
+    },
+    dropdownList: {
+        position: 'absolute',
+        top: 'calc(100% + 4px)',
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+        maxHeight: '180px',
+        overflowY: 'auto',
+        zIndex: 10,
+    },
+    dropdownItem: {
+        padding: '10px 14px',
+        cursor: 'pointer',
+        fontSize: '16px',
+        color: '#333',
+    },
+    dropdownItemSelected: {
+        padding: '10px 14px',
+        cursor: 'pointer',
+        fontSize: '16px',
+        backgroundColor: 'black',
+        color: 'white',
         fontWeight: 'bold',
     },
 

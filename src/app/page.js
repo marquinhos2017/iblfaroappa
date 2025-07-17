@@ -9,6 +9,7 @@ import { db } from "@/firebase/firebase"; // Ajuste o caminho conforme sua estru
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, updateDoc, getDoc } from "firebase/firestore";
 import Badge from "./Badge";
 import { FiLogOut, FiTrash2, FiCalendar, FiChevronDown, FiUsers, FiMail, FiPlus, FiAirplay, FiX, FiPackage } from 'react-icons/fi';
+
 export default function DeezerSearchPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -655,10 +656,7 @@ export default function DeezerSearchPage() {
         >
           ←
         </button>
-        <h1 style={styles.title}>
-          <FiAirplay style={styles.titleIcon} />
 
-        </h1>
       </div>
 
       {/* Usuário + Ações */}
