@@ -8,10 +8,12 @@ import '../../app/admin/page.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useRouter } from 'next/navigation'; // ← certo para Next.js 13+
-import { FiLogOut, FiTrash2, FiCalendar, FiChevronDown, FiUsers, FiMail, FiPlus, FiAirplay, FiX, FiPackage } from 'react-icons/fi';
+import { FiLogOut, FiTrash2, FiCalendar, FiChevronDown, FiUsers, FiMail, FiPlus, FiAirplay, FiX, FiPackage, FiMusic } from 'react-icons/fi';
 import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
 import { MdEventAvailable } from 'react-icons/md';
 import styles from '../../app/admin/page.module.css';
+
+
 
 
 function App() {
@@ -23,7 +25,39 @@ function App() {
     const [showEventForm, setShowEventForm] = useState(false);
     const [disponibilidades, setDisponibilidades] = useState([]);
     const [loadingNames, setLoadingNames] = useState(false);
+    const [playlists, setPlaylists] = useState([]);
 
+    const fetchPlaylists = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, 'playlista'));
+            const data = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            setPlaylists(data);
+
+            // Buscar nomes dos músicos
+            const userIds = [...new Set(data.map(item => item.user_id))]; // user_ids únicos
+            const namesMap = {};
+
+            await Promise.all(userIds.map(async (id) => {
+                const name = await fetchMusicianNameByUserId(id);
+                if (name) {
+                    namesMap[id] = name;
+                }
+            }));
+
+            setMusicianNamesById(namesMap);
+        } catch (error) {
+            console.error('Erro ao buscar playlists:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchEventos();
+        fetchPlaylists(); // adiciona aqui
+    }, []);
 
     const [musicianNames, setMusicianNames] = useState({}); // { musicoId: nome }
     const router = useRouter();
@@ -59,7 +93,7 @@ function App() {
     };
 
 
-
+    const [disponibilidadesPorEvento, setDisponibilidadesPorEvento] = useState({});
 
     // Carrega eventos do Firestore
 
@@ -81,16 +115,30 @@ function App() {
     // Observa mudanças nas disponibilidades
     // No seu useEffect que observa as disponibilidades
 
+    const [allExpanded, setAllExpanded] = React.useState(false);
+
+    useEffect(() => {
+        if (allExpanded) {
+            // Carrega disponibilidades para todos os eventos quando "Revelar tudo" é clicado
+            eventos.forEach(event => {
+                handleEventSelect(event);
+            });
+        }
+    }, [allExpanded]);
 
 
     async function handleEventSelect(event) {
-        // Se já está selecionado, apenas fecha
-        if (selectedEvent?.id === event.id) {
+        // Se já está selecionado e NÃO estamos no modo "Revelar tudo", apenas fecha
+        if (selectedEvent?.id === event.id && !allExpanded) {
             setSelectedEvent(null);
             return;
         }
 
-        setSelectedEvent(event);
+        // Se estamos no modo "Revelar tudo", apenas carrega os dados sem mudar o selectedEvent
+        if (!allExpanded) {
+            setSelectedEvent(event);
+        }
+
         setLoadingNames(true);
 
         const q = query(
@@ -103,13 +151,16 @@ function App() {
         const results = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            // Garante que musicoId é número
             musicoId: Number(doc.data().musicoId)
         }));
 
-        setDisponibilidades(results);
+        // Armazena as disponibilidades por ID de evento
+        setDisponibilidadesPorEvento(prev => ({
+            ...prev,
+            [event.id]: results
+        }));
 
-        // Busca apenas os nomes que ainda não temos
+        // Busca nomes que ainda não temos
         const namesToFetch = results
             .filter(disp => !musicianNames[disp.musicoId])
             .map(disp => disp.musicoId);
@@ -125,7 +176,6 @@ function App() {
                 })
             );
 
-            // Atualiza o estado de uma só vez
             setMusicianNames(prev => ({ ...prev, ...newNames }));
         }
 
@@ -133,12 +183,32 @@ function App() {
     }
 
 
-
     const handleTimeSlotToggle = (timeSlot) => {
         setUserAvailability(prev => ({
             ...prev,
             [timeSlot]: !prev[timeSlot]
         }));
+    };
+    const [musicianNamesById, setMusicianNamesById] = useState({});
+
+    const fetchMusicianNameByUserId = async (userId) => {
+        try {
+            const userIdAsNumber = parseInt(userId); // ← conversão importante aqui
+
+            const q = query(
+                collection(db, 'musicos'),
+                where('user_id', '==', userIdAsNumber)
+            );
+
+            const snapshot = await getDocs(q);
+
+            if (!snapshot.empty) {
+                return snapshot.docs[0].data().name;
+            }
+        } catch (error) {
+            console.error(`Erro ao buscar músico com user_id ${userId}:`, error);
+        }
+        return null;
     };
 
     const submitAvailability = async () => {
@@ -192,6 +262,15 @@ function App() {
             return null;
         }
     };
+    const [expandedArtists, setExpandedArtists] = useState({});
+
+    const toggleArtist = (artist) => {
+        setExpandedArtists(prev => ({
+            ...prev,
+            [artist]: !prev[artist]
+        }));
+    };
+
     const toggleEventForm = () => {
         setShowEventForm(!showEventForm);
     };
@@ -356,7 +435,12 @@ function App() {
                     </div>
                 </div>
             )}
-
+            <button
+                onClick={() => setAllExpanded(prev => !prev)}
+                className={styles.showAllButton}
+            >
+                {allExpanded ? 'Ocultar tudo' : 'Revelar tudo'}
+            </button>
 
             {/* Lista de Eventos */}
             <section className={styles.section}>
@@ -371,7 +455,8 @@ function App() {
                     )}
 
                     {eventos.map(event => {
-                        const isSelected = selectedEvent?.id === event.id;
+                        const isSelected = allExpanded || (selectedEvent?.id === event.id);
+
                         const eventDate = new Date(event.date?.seconds * 1000 || event.date);
 
                         return (
@@ -408,18 +493,18 @@ function App() {
                                         <div className={styles.availabilityDropdown}>
                                             <div className={styles.availabilityHeader}>
                                                 <FiUsers className={styles.availabilityIcon} />
-                                                <span>Disponibilidades ({disponibilidades.length})</span>
+                                                <span>Disponibilidades ({(disponibilidadesPorEvento[event.id] || []).length})</span>
                                             </div>
 
                                             {loadingNames ? (
-                                                [...Array(Math.max(3, disponibilidades.length))].map((_, index) => (
+                                                [...Array(Math.max(3, (disponibilidadesPorEvento[event.id] || []).length))].map((_, index) => (
                                                     <div key={`skeleton-${index}`} className={styles.skeletonItem}>
                                                         <div className={styles.skeletonIcon}></div>
                                                         <div className={styles.skeletonText}></div>
                                                     </div>
                                                 ))
                                             ) : (
-                                                disponibilidades.map(disp => {
+                                                (disponibilidadesPorEvento[event.id] || []).map(disp => {
                                                     const name = musicianNames[disp.musicoId];
                                                     return (
                                                         <div key={disp.id} className={styles.availabilityItem}>
@@ -454,6 +539,95 @@ function App() {
                     })}
                 </div>
             </section>
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>
+                    <FiMusic className={styles.sectionIcon} />
+                    Artistas da Playlist
+                </h2>
+
+                {Object.entries(
+                    playlists.reduce((acc, item) => {
+                        const artist = item.artist || 'Desconhecido';
+                        if (!acc[artist]) acc[artist] = [];
+                        acc[artist].push(item);
+                        return acc;
+                    }, {})
+                ).map(([artist, items]) => (
+                    <div key={artist} className={styles.artistSection}>
+                        <button
+                            className={styles.artistToggle}
+                            onClick={() => toggleArtist(artist)}
+                        >
+                            {expandedArtists[artist] ? '▼' : '▶'} {artist} ({items.length})
+                        </button>
+
+                        {expandedArtists[artist] && (
+                            <div className={styles.playlistGrid}>
+                                {items.map(item => (
+                                    <div key={item.id} className={styles.cardWrapper}>
+                                        <div className={styles.playlistCard}>
+                                            <img src={item.cover} alt="cover" className={styles.playlistCover} />
+                                            <h3 style={{ fontSize: '16px' }}>{item.title}</h3>
+                                            <p><strong>Escolhido por:</strong> {musicianNamesById[item.user_id] || 'Desconhecido'}</p>
+                                            <div className={styles.links}>
+                                                <a href={item.deezer_link} target="_blank" rel="noopener noreferrer">Deezer</a>
+                                                {item.youtube_link && item.youtube_link !== "" && (
+                                                    <a href={item.youtube_link} target="_blank" rel="noopener noreferrer">YouTube</a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </section>
+
+
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>
+                    <FiPackage className={styles.sectionIcon} />
+                    Músicas da Playlist
+                </h2>
+
+                {Object.entries(
+                    playlists.reduce((acc, item) => {
+                        const musicianName = musicianNamesById[item.user_id] || 'Desconhecido';
+                        if (!acc[musicianName]) acc[musicianName] = [];
+                        acc[musicianName].push(item);
+                        return acc;
+                    }, {})
+                ).map(([musicianName, items]) => (
+                    <div key={musicianName} className={styles.musicianSection}>
+                        <h2>
+                            {musicianName} ({items.length})
+                        </h2>
+                        <div className={styles.playlistGrid}>
+                            {items.map((item) => (
+                                <div key={item.id} className={styles.cardWrapper}>
+                                    <div className={styles.playlistCard}>
+                                        <img src={item.cover} alt="cover" className={styles.playlistCover} />
+                                        <h3 style={{ fontSize: '16px' }}>{item.title}</h3>
+                                        <p><strong>Artista:</strong> {item.artist}</p>
+                                        <div className={styles.links}>
+                                            <a href={item.deezer_link} target="_blank" rel="noopener noreferrer">Deezer</a>
+                                            {item.youtube_link && item.youtube_link !== "" && (
+                                                <a href={item.youtube_link} target="_blank" rel="noopener noreferrer">YouTube</a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                ))}
+            </section>
+
+
+
+
 
             {/* Lista de Emails */}
             <section className={styles.section}>
