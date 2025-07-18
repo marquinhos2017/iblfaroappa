@@ -8,10 +8,12 @@ import '../../app/admin/page.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useRouter } from 'next/navigation'; // ← certo para Next.js 13+
-import { FiLogOut, FiTrash2, FiCalendar, FiChevronDown, FiUsers, FiMail, FiPlus, FiAirplay, FiX, FiPackage, FiMusic } from 'react-icons/fi';
+import { FiLogOut, FiChevronDown, FiTrash2, FiCalendar, FiChevronfDown, FiUsers, FiMail, FiPlus, FiAirplay, FiX, FiPackage, FiMusic } from 'react-icons/fi';
 import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
 import { MdEventAvailable } from 'react-icons/md';
 import styles from '../../app/admin/page.module.css';
+import ModalDelete from '../components/modaldelete'; // ajuste conforme seu path
+
 
 
 
@@ -23,9 +25,75 @@ function App() {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [userAvailability, setUserAvailability] = useState({});
     const [showEventForm, setShowEventForm] = useState(false);
+
+    const [closingModal, setClosingModal] = useState(false);
+    useEffect(() => {
+        function preventScroll(e) {
+            e.preventDefault();
+        }
+
+        if (showEventForm) {
+            document.body.style.overflow = 'hidden';
+            window.addEventListener('touchmove', preventScroll, { passive: false });
+        } else {
+            document.body.style.overflow = '';
+            window.removeEventListener('touchmove', preventScroll);
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+            window.removeEventListener('touchmove', preventScroll);
+        };
+    }, [showEventForm]);
+
+
+    const openEventForm = () => {
+        setShowEventForm(true);
+        setClosingModal(false);
+    };
+
+    const closeEventForm = () => {
+        setClosingModal(true);
+        setTimeout(() => {
+            setShowEventForm(false);
+            setClosingModal(false);
+        }, 300); // Duração da animação
+    };
+
+
     const [disponibilidades, setDisponibilidades] = useState([]);
     const [loadingNames, setLoadingNames] = useState(false);
     const [playlists, setPlaylists] = useState([]);
+
+    const [modalOpen, setModalOpen] = useState(false);
+    const [eventIdToDelete, setEventIdToDelete] = useState(null);
+
+    const handleDeleteClick = (eventId, e) => {
+        e.stopPropagation();
+        setEventIdToDelete(eventId);
+        setModalOpen(true);
+    };
+
+    const deleteEvent = async (eventId) => {
+        setDeletingEvents(prev => new Set(prev).add(eventId));
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        try {
+            await setDoc(doc(db, 'eventos', eventId), {}, { merge: false });
+            await fetchEventos();
+            setSelectedEvent(null);
+            alert('Evento deletado com sucesso!');
+        } catch (error) {
+            console.error('Erro ao deletar evento:', error);
+            alert('Erro ao deletar evento.');
+        } finally {
+            setDeletingEvents(prev => {
+                const copy = new Set(prev);
+                copy.delete(eventId);
+                return copy;
+            });
+        }
+    };
 
     const fetchPlaylists = async () => {
         try {
@@ -274,37 +342,16 @@ function App() {
     const toggleEventForm = () => {
         setShowEventForm(!showEventForm);
     };
-    const formattedDate = newEvent.date.toLocaleString('pt-BR', {
-        dateStyle: 'full',
-        timeStyle: 'short'
-    });
-    const deleteEvent = async (eventId) => {
-        const confirmDelete = confirm('Tem certeza que deseja deletar este evento?');
-        if (!confirmDelete) return;
+    const formattedDate = newEvent.date
+        ? newEvent.date.toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+        : '';
 
-        // Marca o evento como deletando para a animação
-        setDeletingEvents(prev => new Set(prev).add(eventId));
-
-        // Aguarda o tempo da animação (exemplo 300ms)
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        try {
-            await setDoc(doc(db, 'eventos', eventId), {}, { merge: false }); // Remove o doc
-            await fetchEventos(); // Recarrega os eventos
-            setSelectedEvent(null); // limpa a seleção atual
-            alert('Evento deletado com sucesso!');
-        } catch (error) {
-            console.error('Erro ao deletar evento:', error);
-            alert('Erro ao deletar evento.');
-        } finally {
-            // Remove o evento da lista de deletando
-            setDeletingEvents(prev => {
-                const copy = new Set(prev);
-                copy.delete(eventId);
-                return copy;
-            });
-        }
-    };
 
 
     const handleNewEventChange = (e) => {
@@ -358,8 +405,7 @@ function App() {
             {/* Header */}
             <header className={styles.header}>
                 <h1 className={styles.title}>
-                    <FiAirplay className={styles.titleIcon} />
-                    Eventos IBL Faro
+                    Lagoinha Faro Music
                 </h1>
 
                 <div className={styles.headerActions}>
@@ -380,10 +426,16 @@ function App() {
                 </div>
             </header>
 
-            {/* Novo Evento Form */}
             {showEventForm && (
-                <div className={styles.modalBackdrop}>
-                    <div className={styles.modalContent}>
+                <div
+                    className={styles.modalBackdrop}
+                    onClick={closeEventForm}
+                >
+                    <div
+                        className={`${styles.modalContent} ${closingModal ? styles.slideDown : styles.slideUp
+                            }`}
+                        onClick={(e) => e.stopPropagation()} // impede clique no conteúdo fechar
+                    >
                         <h2 className={styles.formTitle}>
                             <FiPlus className={styles.formIcon} />
                             Novo Evento
@@ -402,24 +454,41 @@ function App() {
                         </div>
 
                         <div className={styles.formGroup}>
-                            <label>Data e Hora</label>
+                            <label>Data</label>
                             <DatePicker
                                 selected={newEvent.date}
-                                onChange={(date) =>
-                                    setNewEvent((prev) => ({ ...prev, date }))
-                                }
-                                showTimeSelect
-                                dateFormat="Pp"
-                                timeFormat="HH:mm"
-                                timeIntervals={15}
-                                placeholderText="Selecione data/hora"
-                                className={styles.datePicker}
+                                onChange={(date) => setNewEvent(prev => ({ ...prev, date }))}
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Selecione a data"
+                                className={styles.input}
+                                inline={false} // pra aparecer como input, não inline
                             />
                         </div>
 
+                        <div className={styles.formGroup} style={{ marginTop: '12px' }}>
+                            <label>Hora</label>
+                            <div className="container-datepicker">
+                                <DatePicker
+                                    selected={newEvent.time}
+                                    onChange={(time) => setNewEvent(prev => ({ ...prev, time }))}
+                                    showTimeSelect
+                                    showTimeSelectOnly
+                                    timeIntervals={15}
+                                    timeCaption="Hora"
+                                    dateFormat="HH:mm"
+                                    placeholderText="Selecione a hora"
+                                    className={styles.input}
+                                    inline={false}
+                                />
+                            </div>
+
+                        </div>
+
+
+
                         <div className={styles.formButtons}>
                             <button
-                                onClick={toggleEventForm}
+                                onClick={closeEventForm}
                                 className={styles.secondaryButton}
                             >
                                 Cancelar
@@ -435,12 +504,8 @@ function App() {
                     </div>
                 </div>
             )}
-            <button
-                onClick={() => setAllExpanded(prev => !prev)}
-                className={styles.showAllButton}
-            >
-                {allExpanded ? 'Ocultar tudo' : 'Revelar tudo'}
-            </button>
+
+
 
             {/* Lista de Eventos */}
             <section className={styles.section}>
@@ -449,6 +514,16 @@ function App() {
                     Próximos Eventos
                 </h2>
 
+                {/* Botão Revelar/Ocultar tudo */}
+                {eventos.length > 0 && (
+                    <button
+                        onClick={() => setAllExpanded(prev => !prev)}
+                        className={styles.showAllButton}
+                    >
+                        {allExpanded ? 'Ocultar tudo' : 'Revelar tudo'}
+                    </button>
+                )}
+
                 <div className={styles.eventList}>
                     {eventos.length === 0 && (
                         <p className={styles.emptyMessage}>Nenhum evento agendado</p>
@@ -456,19 +531,16 @@ function App() {
 
                     {eventos.map(event => {
                         const isSelected = allExpanded || (selectedEvent?.id === event.id);
-
                         const eventDate = new Date(event.date?.seconds * 1000 || event.date);
 
                         return (
                             <div key={event.id} className={styles.eventWrapper}>
-                                {/* Card clicável */}
                                 <div
-                                    key={event.id}
                                     className={`
-        ${styles.eventCard} 
-        ${isSelected ? styles.selectedEvent : ''} 
-        ${deletingEvents.has(event.id) ? styles.fadeOut : ''}
-    `}
+                    ${styles.eventCard} 
+                    ${isSelected ? styles.selectedEvent : ''} 
+                    ${deletingEvents.has(event.id) ? styles.fadeOut : ''}
+                `}
                                     onClick={() => handleEventSelect(event)}
                                 >
                                     <div className={styles.eventTopRow}>
@@ -488,7 +560,28 @@ function App() {
                                         <FiChevronDown className={`${styles.arrowIcon} ${isSelected ? styles.rotated : ''}`} />
                                     </div>
 
-                                    {/* Dropdown */}
+                                    {/* Botão de deletar dentro do card, fora do dropdown */}
+                                    <div className={styles.cardActions}>
+                                        <button
+                                            onClick={(e) => handleDeleteClick(event.id, e)}
+                                            className={styles.deleteButtonInside}
+                                        >
+                                            <FiTrash2 size={16} />
+                                            <span>Deletar</span>
+                                        </button>
+                                    </div>
+
+                                    <ModalDelete
+                                        isOpen={modalOpen}
+                                        onClose={() => setModalOpen(false)}
+                                        onConfirm={() => {
+                                            deleteEvent(eventIdToDelete);
+                                            setModalOpen(false);
+                                        }}
+                                        message="Tem certeza que deseja deletar este evento?"
+                                    />
+
+                                    {/* Dropdown apenas se selecionado */}
                                     {isSelected && (
                                         <div className={styles.availabilityDropdown}>
                                             <div className={styles.availabilityHeader}>
@@ -521,24 +614,13 @@ function App() {
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Botão de deletar fora do card */}
-                                <button
-                                    onClick={async (e) => {
-                                        e.stopPropagation();
-                                        await deleteEvent(event.id);
-                                    }}
-                                    className={styles.deleteButtonOutside}
-                                    title="Deletar evento"
-                                >
-                                    <FiTrash2 size={16} />
-                                </button>
                             </div>
-
                         );
                     })}
+
                 </div>
             </section>
+
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>
                     <FiMusic className={styles.sectionIcon} />
@@ -588,7 +670,7 @@ function App() {
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>
                     <FiPackage className={styles.sectionIcon} />
-                    Músicas da Playlist
+                    Sugestões Repertório 2025.2
                 </h2>
 
                 {Object.entries(
