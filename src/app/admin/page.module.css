@@ -9,7 +9,7 @@
 }
 
 .header {
-    background-color: black;
+    background-color: #504ab6;
     color: white;
     padding: 1rem;
     display: flex;
@@ -630,7 +630,7 @@
 
 /* Icone da seção */
 .sectionIcon {
-    color: #d35400;
+    color: #6f68dd;
     font-size: 2rem;
 }
 
@@ -939,18 +939,23 @@
 }
 
 .deleteButtonInside {
-    background: rgba(233, 197, 197, 0.288);
-    border: none;
-    color: #d9534f;
+    background: rgba(197, 48, 48, 0.08);
+    /* vermelho translúcido */
+    border: 1px solid #c53030;
+    color: #c53030;
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     font-size: 14px;
-    padding: 4px 8px;
+    padding: 8px;
     border-radius: 4px;
-    transition: background 0.2s;
+    transition: background 0.2s, color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
 }
+
 
 .deleteButtonInside:hover {
     background: #f8d7da;
@@ -1173,4 +1178,156 @@
 .primaryButton:disabled {
     background-color: #b5b2eb;
     cursor: not-allowed;
+}
+
+:global(.react-datepicker) {
+    background-color: transparent;
+    /* ou none, mas transparent é melhor */
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 6px !important;
+    box-shadow: 0 4px 10px rgba(111, 104, 221, 0.3) !important;
+    margin-left: 80px;
+    /* <-- Adicione essa linha */
+}
+
+
+:global(.react-datepicker__day-name) {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-radius: 50% !important;
+}
+
+
+
+
+
+:global(.react-datepicker) {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background-color: #ffffff;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 16px rgba(111, 104, 221, 0.25) !important;
+    overflow: hidden;
+}
+
+:global(.react-datepicker__header) {
+    background-color: #6f68dd !important;
+    color: white !important;
+    border-bottom: none !important;
+    padding: 12px 16px !important;
+}
+
+:global(.react-datepicker__current-month),
+:global(.react-datepicker-time__header),
+:global(.react-datepicker-year-header) {
+    color: white !important;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+:global(.react-datepicker__day-names),
+:global(.react-datepicker__week) {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+}
+
+:global(.react-datepicker__day),
+:global(.react-datepicker__day-name) {
+    width: 36px;
+
+    margin: 2px;
+    border-radius: 50% !important;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+:global(.react-datepicker__day:hover) {
+    background-color: rgba(111, 104, 221, 0.15) !important;
+    color: #6f68dd !important;
+}
+
+:global(.react-datepicker__day--today) {
+    border: 1px solid #6f68dd !important;
+    font-weight: bold;
+    color: #6f68dd !important;
+}
+
+:global(.react-datepicker__day--selected),
+:global(.react-datepicker__day--keyboard-selected) {
+    background-color: #6f68dd !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+:global(.react-datepicker__day--disabled) {
+    color: #ccc !important;
+    cursor: not-allowed;
+}
+
+:global(.react-datepicker__triangle) {
+    display: none !important;
+}
+
+/* Time list (caso use time picker) */
+:global(.react-datepicker__time-container) {
+    border-left: none !important;
+}
+
+:global(.react-datepicker__time-list-item) {
+    padding: 6px 12px !important;
+    font-size: 0.9rem;
+}
+
+:global(.react-datepicker__time-list-item--selected) {
+    background-color: #6f68dd !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-radius: 6px !important;
+}
+
+body.modal-open,
+html.modal-open,
+#__next.modal-open,
+#root.modal-open {
+    overflow: hidden !important;
+    height: 100% !important;
+}
+
+/* No seu arquivo module.css */
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.076);
+    z-index: 1000;
+    overflow-y: auto;
+    /* Permite scroll apenas no modal se necessário */
+}
+
+.modalContent {
+    position: relative;
+
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.gestureHandle {
+    width: 40px;
+    height: 5px;
+    background-color: #ccc;
+    border-radius: 3px;
+    margin: 0 auto 16px;
+}
+
+.logo {
+    height: 40px;
+    /* ou o tamanho que preferir */
+    width: auto;
+    cursor: pointer;
+    /* se quiser que pareça clicável */
 }

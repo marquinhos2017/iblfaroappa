@@ -19,6 +19,10 @@ import ModalDelete from '../components/modaldelete'; // ajuste conforme seu path
 
 
 function App() {
+
+    const [touchStartY, setTouchStartY] = useState(0);
+    const [touchEndY, setTouchEndY] = useState(0);
+
     const [eventos, setEventos] = useState([]);
     const [availabilities, setAvailabilities] = useState([]);
     const [userName, setUserName] = useState('');
@@ -28,22 +32,22 @@ function App() {
 
     const [closingModal, setClosingModal] = useState(false);
     useEffect(() => {
-        function preventScroll(e) {
-            e.preventDefault();
-        }
-
         if (showEventForm) {
-            document.body.style.overflow = 'hidden';
-            window.addEventListener('touchmove', preventScroll, { passive: false });
-        } else {
-            document.body.style.overflow = '';
-            window.removeEventListener('touchmove', preventScroll);
-        }
+            // Salva a posição atual do scroll
+            const scrollY = window.scrollY;
 
-        return () => {
-            document.body.style.overflow = '';
-            window.removeEventListener('touchmove', preventScroll);
-        };
+            // Bloqueia o scroll
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.width = '100%';
+
+            return () => {
+                // Restaura o scroll quando o modal fecha
+                document.body.style.position = '';
+                document.body.style.top = '';
+                window.scrollTo(0, scrollY);
+            };
+        }
     }, [showEventForm]);
 
 
@@ -159,7 +163,20 @@ function App() {
         }
         setCarregando(false);
     };
+    useEffect(() => {
+        if (showEventForm) {
+            // Salva o overflow original
+            const originalStyle = window.getComputedStyle(document.body).overflow;
 
+            // Bloqueia o scroll
+            document.body.style.overflow = 'hidden';
+
+            // Ao desmontar ou mudar o estado, restaura
+            return () => {
+                document.body.style.overflow = originalStyle;
+            };
+        }
+    }, [showEventForm]);
 
     const [disponibilidadesPorEvento, setDisponibilidadesPorEvento] = useState({});
 
@@ -404,10 +421,7 @@ function App() {
         <div className={styles.container}>
             {/* Header */}
             <header className={styles.header}>
-                <h1 className={styles.title}>
-                    Lagoinha Faro Music
-                </h1>
-
+                <img src="/assets/L.png" alt="Lagoinha Faro Music Logo" className={styles.logo} />
                 <div className={styles.headerActions}>
                     <button
                         onClick={toggleEventForm}
@@ -432,10 +446,11 @@ function App() {
                     onClick={closeEventForm}
                 >
                     <div
-                        className={`${styles.modalContent} ${closingModal ? styles.slideDown : styles.slideUp
-                            }`}
-                        onClick={(e) => e.stopPropagation()} // impede clique no conteúdo fechar
+                        className={`${styles.modalContent} ${closingModal ? styles.slideDown : styles.slideUp}`}
+                        onClick={(e) => e.stopPropagation()}
                     >
+                        <div className={styles.gestureHandle}></div>
+
                         <h2 className={styles.formTitle}>
                             <FiPlus className={styles.formIcon} />
                             Novo Evento
