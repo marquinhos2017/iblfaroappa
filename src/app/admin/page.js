@@ -470,14 +470,15 @@ function App() {
 
                         <div className={styles.formGroup}>
                             <label>Data</label>
-                            <DatePicker
-                                selected={newEvent.date}
-                                onChange={(date) => setNewEvent(prev => ({ ...prev, date }))}
-                                dateFormat="dd/MM/yyyy"
-                                placeholderText="Selecione a data"
-                                className={styles.input}
-                                inline={false} // pra aparecer como input, não inline
-                            />
+                            <div className={styles.datepickerWrapper}>
+                                <DatePicker
+                                    selected={newEvent.date}
+                                    onChange={(date) => setNewEvent(prev => ({ ...prev, date }))}
+                                    dateFormat="dd/MM/yyyy"
+                                    placeholderText="Selecione a data"
+                                    className={styles.input}
+                                    inline={false} // pra aparecer como input, não inline
+                                /></div>
                         </div>
 
                         <div className={styles.formGroup} style={{ marginTop: '12px' }}>
