@@ -1220,22 +1220,22 @@
 }
 
 .datepickerWrapper :global(.react-datepicker__current-month),
-:global(.react-datepicker-time__header),
-:global(.react-datepicker-year-header) {
+.datepickerWrapper :global(.react-datepicker-time__header),
+.datepickerWrapper :global(.react-datepicker-year-header) {
     color: white !important;
     font-weight: 600;
     font-size: 1rem;
 }
 
 .datepickerWrapper :global(.react-datepicker__day-names),
-:global(.react-datepicker__week) {
+.datepickerWrapper :global(.react-datepicker__week) {
     display: flex;
     justify-content: space-between;
     padding: 0 10px;
 }
 
 .datepickerWrapper :global(.react-datepicker__day),
-:global(.react-datepicker__day-name) {
+.datepickerWrapper :global(.react-datepicker__day-name) {
     width: 36px;
 
     margin: 2px;
@@ -1257,7 +1257,7 @@
 }
 
 .datepickerWrapper :global(.react-datepicker__day--selected),
-:global(.react-datepicker__day--keyboard-selected) {
+.datepickerWrapper :global(.react-datepicker__day--keyboard-selected) {
     background-color: #6f68dd !important;
     color: white !important;
     font-weight: 600;
