@@ -9,8 +9,12 @@ import { db } from "@/firebase/firebase"; // Ajuste o caminho conforme sua estru
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, updateDoc, getDoc } from "firebase/firestore";
 import Badge from "./Badge";
 import { FiLogOut, FiTrash2, FiCalendar, FiChevronDown, FiUsers, FiMail, FiPlus, FiAirplay, FiX, FiPackage } from 'react-icons/fi';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function DeezerSearchPage() {
+
+
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -37,6 +41,12 @@ export default function DeezerSearchPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [savedSongs, setSavedSongs] = useState([]);
   const [showSavedSongs, setShowSavedSongs] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWelcome(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
   const [editSong, setEditSong] = useState({
     title: '',
     artist: '',
@@ -70,7 +80,19 @@ export default function DeezerSearchPage() {
       alert('Erro ao deletar música');
     }
   };
-
+  useEffect(() => {
+    // Mostra o toast assim que a página carregar
+    toast.info("Bem-vindo ao app de músicas!", {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+  }, []); // Array de dependências vazio = executa apenas no mount
   const [modalOpen, setModalOpen] = useState(false);
   const [newName, setNewName] = useState(user?.name || '');
 
@@ -723,7 +745,9 @@ export default function DeezerSearchPage() {
                   <div style={{ position: "relative", display: "inline-block" }}>
                     <button
                       style={styles.saveButton}
-                      onClick={onSaveClick}
+                      onClick={
+                        timer = setTimeout(() => setShowWelcome(false), 3000)
+                      }
                       disabled={isSaving}
                     >
                       <FaSave style={styles.buttonIcon} />
@@ -798,7 +822,7 @@ export default function DeezerSearchPage() {
           <FiLogOut size={20} />
         </button>
       </div>
-    </header>
+    </header >
   );
 
   const saveToFirestore = async () => {
@@ -854,9 +878,26 @@ export default function DeezerSearchPage() {
 
   return (
     <>
+
       {appBar}
       <div style={{ padding: 20, fontFamily: 'Arial, sans-serif', backgroundColor: '#fff', color: '#000' }}>
+        <ToastContainer />
 
+        {showWelcome && (
+          <div style={{
+            position: 'fixed',
+            bottom: 20,
+            left: 20,
+            backgroundColor: '#0B3D91',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            zIndex: 1000,
+            animation: 'fadeIn 0.5s'
+          }}>
+            SUGESTÕES DE MÚSICAS ENCERRADA.
+          </div>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -1047,7 +1088,18 @@ export default function DeezerSearchPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation(); // Evita conflito com o clique no <li>
-                  openModal(song);
+                  // openModal(song);
+                  const showTimer = setTimeout(() => {
+                    setShowWelcome(true);
+
+                    // Esconde a mensagem depois de mais 2 segundos
+                    const hideTimer = setTimeout(() => {
+                      setShowWelcome(false);
+                    }, 3000);
+
+                    // Limpa o hideTimer se o componente for desmontado
+                    return () => clearTimeout(hideTimer);
+                  }, 3000);
                 }}
                 style={{
                   padding: '8px 15px',

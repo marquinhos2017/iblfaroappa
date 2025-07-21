@@ -22,8 +22,11 @@ const injectGlobalStyles = () => {
 
 
 const EventosPage = () => {
-
-
+    const [showWelcome, setShowWelcome] = useState(true);
+    useEffect(() => {
+        const timer = setTimeout(() => setShowWelcome(false), 3000);
+        return () => clearTimeout(timer);
+    }, []);
 
     async function adicionarEventosDomingosAgosto() {
         const year = 2025;
@@ -354,6 +357,21 @@ const EventosPage = () => {
 
     return (
         <>
+            {showWelcome && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: 20,
+                    left: 20,
+                    backgroundColor: '#0B3D91',
+                    color: 'white',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    zIndex: 1000,
+                    animation: 'fadeIn 0.5s'
+                }}>
+                    SUGESTÕES DE MÚSICAS ENCERRADA.
+                </div>
+            )}
             {showModal && (
                 <div style={styles.modalOverlay}>
                     <div style={styles.modalContent}>
