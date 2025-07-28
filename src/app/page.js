@@ -1088,7 +1088,7 @@ export default function DeezerSearchPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation(); // Evita conflito com o clique no <li>
-                  // openModal(song);
+                  openModal(song);
                   const showTimer = setTimeout(() => {
                     setShowWelcome(true);
 
