@@ -426,13 +426,15 @@ const EventosPage = () => {
                         <div>{user.name}</div>
                     </div>
 
-                    <button
+                    {/*                    <button
                         onClick={() => router.push('/')}
                         title="Playlist"
                         style={styles.iconButton}
                     >
                         <FiPlus size={20} />
                     </button>
+                    */
+                    }
 
                     <button
                         onClick={handleLogout}
