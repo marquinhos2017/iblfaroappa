@@ -370,6 +370,124 @@ function App() {
         : '';
 
 
+    const createSeptemberEvents = async () => {
+        const year = 2025;
+        const month = 8; // Setembro (0 = janeiro, então setembro = 8)
+
+        let eventsToAdd = [];
+
+        // Pega todos os dias de setembro
+        const daysInSeptember = new Date(year, month + 1, 0).getDate();
+
+        for (let day = 1; day <= daysInSeptember; day++) {
+            const currentDate = new Date(year, month, day);
+
+            const weekday = currentDate.getDay(); // 0 = domingo, 3 = quarta
+
+            if (weekday === 3) {
+                // Quarta-feira -> Culto Fé às 20:00
+                const date = new Date(year, month, day, 20, 0, 0);
+                eventsToAdd.push({
+                    name: "Culto Fé",
+                    date
+                });
+            }
+
+            if (weekday === 0) {
+                // Domingo -> Culto de Celebração (10:00 e 19:30)
+                const morning = new Date(year, month, day, 10, 0, 0);
+                const night = new Date(year, month, day, 19, 30, 0);
+
+                eventsToAdd.push({ name: "Culto de Celebração", date: morning });
+                eventsToAdd.push({ name: "Culto de Celebração", date: night });
+            }
+        }
+
+        try {
+            const batchEvents = [];
+
+            for (let ev of eventsToAdd) {
+                const formattedDate = ev.date.toLocaleString("pt-BR", {
+                    dateStyle: "full",
+                    timeStyle: "short"
+                });
+
+                const docRef = await addDoc(collection(db, "eventos"), {
+                    name: ev.name,
+                    date: ev.date,
+                    dateFormatted: formattedDate,
+                    createdAt: new Date()
+                });
+
+                batchEvents.push({
+                    id: docRef.id,
+                    name: ev.name,
+                    date: ev.date,
+                    dateFormatted: formattedDate
+                });
+            }
+
+            setEventos(prev => [...prev, ...batchEvents]);
+            alert("Eventos de setembro criados com sucesso!");
+        } catch (error) {
+            console.error("Erro ao criar eventos de setembro:", error);
+            alert(`Erro: ${error.message}`);
+        }
+    };
+    const generateSeptemberEvents = () => {
+        const year = 2025;
+        const month = 8; // setembro (0-based)
+        const daysInSeptember = new Date(year, month + 1, 0).getDate();
+
+        let events = [];
+
+        for (let day = 1; day <= daysInSeptember; day++) {
+            const currentDate = new Date(year, month, day);
+            const weekday = currentDate.getDay(); // 0=domingo, 3=quarta
+
+            if (weekday === 3) {
+                // Quarta-feira
+                const date = new Date(year, month, day, 20, 0, 0);
+                events.push({
+                    name: "Culto Fé",
+                    date,
+                    dateFormatted: date.toLocaleString("pt-BR", {
+                        dateStyle: "full",
+                        timeStyle: "short"
+                    })
+                });
+            }
+
+            if (weekday === 0) {
+                // Domingo -> manhã e noite
+                const morning = new Date(year, month, day, 10, 0, 0);
+                const night = new Date(year, month, day, 19, 30, 0);
+
+                events.push({
+                    name: "Culto de Celebração",
+                    date: morning,
+                    dateFormatted: morning.toLocaleString("pt-BR", {
+                        dateStyle: "full",
+                        timeStyle: "short"
+                    })
+                });
+
+                events.push({
+                    name: "Culto de Celebração",
+                    date: night,
+                    dateFormatted: night.toLocaleString("pt-BR", {
+                        dateStyle: "full",
+                        timeStyle: "short"
+                    })
+                });
+            }
+        }
+
+        setSeptemberEvents(events);
+        setShowPreview(true);
+    };
+    const [septemberEvents, setSeptemberEvents] = useState([]);
+    const [showPreview, setShowPreview] = useState(false);
 
     const handleNewEventChange = (e) => {
         const { name, value } = e.target;
@@ -418,8 +536,61 @@ function App() {
 
 
     return (
+
         <div className={styles.container}>
             {/* Header */}
+            <button
+                onClick={generateSeptemberEvents}
+                className={styles.primaryButton}
+            >
+                Gerar Eventos de Setembro
+            </button>
+            {showPreview && (
+                <div className={styles.previewBox}>
+                    <h3>Eventos que serão criados:</h3>
+                    <ul>
+                        {septemberEvents.map((ev, idx) => (
+                            <li key={idx}>
+                                <strong>{ev.name}</strong> – {ev.dateFormatted}
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div className={styles.formButtons}>
+                        <button
+                            onClick={() => setShowPreview(false)}
+                            className={styles.secondaryButton}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const batchEvents = [];
+                                    for (let ev of septemberEvents) {
+                                        const docRef = await addDoc(collection(db, "eventos"), {
+                                            ...ev,
+                                            createdAt: new Date()
+                                        });
+                                        batchEvents.push({ id: docRef.id, ...ev });
+                                    }
+                                    setEventos(prev => [...prev, ...batchEvents]);
+                                    setShowPreview(false);
+                                    alert("Eventos de setembro criados com sucesso!");
+                                } catch (error) {
+                                    console.error("Erro:", error);
+                                    alert("Erro ao criar eventos");
+                                }
+                            }}
+                            className={styles.primaryButton}
+                        >
+                            Confirmar Criação
+                        </button>
+                    </div>
+                </div>
+            )}
+
+
             <header className={styles.header}>
                 <img src="/assets/L.png" alt="Lagoinha Faro Music Logo" className={styles.logo} />
                 <div className={styles.headerActions}>
