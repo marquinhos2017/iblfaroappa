@@ -716,97 +716,179 @@ function App() {
                         <p className={styles.emptyMessage}>Nenhum evento agendado</p>
                     )}
 
-                    {eventos.map(event => {
-                        const isSelected = allExpanded || (selectedEvent?.id === event.id);
-                        const eventDate = new Date(event.date?.seconds * 1000 || event.date);
+                    {Object.entries(
+                        eventos.reduce((acc, event) => {
+                            const eventDate = new Date(event.date?.seconds * 1000 || event.date);
+                            const mesAno = eventDate.toLocaleDateString("pt-BR", {
+                                month: "long",
+                                year: "numeric"
+                            });
 
-                        return (
-                            <div key={event.id} className={styles.eventWrapper}>
-                                <div
-                                    className={`
-                    ${styles.eventCard} 
-                    ${isSelected ? styles.selectedEvent : ''} 
-                    ${deletingEvents.has(event.id) ? styles.fadeOut : ''}
-                `}
-                                    onClick={() => handleEventSelect(event)}
-                                >
-                                    <div className={styles.eventTopRow}>
-                                        <div className={styles.eventInfo}>
-                                            <h3 className={styles.eventName}>{event.name}</h3>
-                                            <p className={styles.eventDate}>
-                                                {eventDate.toLocaleDateString('pt-BR', {
-                                                    weekday: 'short',
-                                                    day: '2-digit',
-                                                    month: 'short',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
-                                            </p>
-                                        </div>
+                            if (!acc[mesAno]) acc[mesAno] = [];
+                            acc[mesAno].push({ ...event, eventDate });
+                            return acc;
+                        }, {})
+                    ).map(([mesAno, eventosDoMes]) => (
+                        <div key={mesAno} className={styles.monthGroup}>
+                            <h3 className={styles.monthTitle}>{mesAno}</h3>
 
-                                        <FiChevronDown className={`${styles.arrowIcon} ${isSelected ? styles.rotated : ''}`} />
-                                    </div>
+                            {eventosDoMes
+                                .sort((a, b) => a.eventDate - b.eventDate) // garante ordem cronológica
+                                .map(event => {
+                                    const isSelected =
+                                        allExpanded || (selectedEvent?.id === event.id);
 
-                                    {/* Botão de deletar dentro do card, fora do dropdown */}
-                                    <div className={styles.cardActions}>
-                                        <button
-                                            onClick={(e) => handleDeleteClick(event.id, e)}
-                                            className={styles.deleteButtonInside}
-                                        >
-                                            <FiTrash2 size={16} />
-                                            <span>Deletar</span>
-                                        </button>
-                                    </div>
-
-                                    <ModalDelete
-                                        isOpen={modalOpen}
-                                        onClose={() => setModalOpen(false)}
-                                        onConfirm={() => {
-                                            deleteEvent(eventIdToDelete);
-                                            setModalOpen(false);
-                                        }}
-                                        message="Tem certeza que deseja deletar este evento?"
-                                    />
-
-                                    {/* Dropdown apenas se selecionado */}
-                                    {isSelected && (
-                                        <div className={styles.availabilityDropdown}>
-                                            <div className={styles.availabilityHeader}>
-                                                <FiUsers className={styles.availabilityIcon} />
-                                                <span>Disponibilidades ({(disponibilidadesPorEvento[event.id] || []).length})</span>
-                                            </div>
-
-                                            {loadingNames ? (
-                                                [...Array(Math.max(3, (disponibilidadesPorEvento[event.id] || []).length))].map((_, index) => (
-                                                    <div key={`skeleton-${index}`} className={styles.skeletonItem}>
-                                                        <div className={styles.skeletonIcon}></div>
-                                                        <div className={styles.skeletonText}></div>
+                                    return (
+                                        <div key={event.id} className={styles.eventWrapper}>
+                                            <div
+                                                className={`
+                                        ${styles.eventCard} 
+                                        ${isSelected ? styles.selectedEvent : ''} 
+                                        ${deletingEvents.has(event.id) ? styles.fadeOut : ''}
+                                    `}
+                                                onClick={() => handleEventSelect(event)}
+                                            >
+                                                <div className={styles.eventTopRow}>
+                                                    <div className={styles.eventInfo}>
+                                                        <h3 className={styles.eventName}>{event.name}</h3>
+                                                        <p className={styles.eventDate}>
+                                                            {event.eventDate.toLocaleDateString('pt-BR', {
+                                                                weekday: 'short',
+                                                                day: '2-digit',
+                                                                month: 'short',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </p>
                                                     </div>
-                                                ))
-                                            ) : (
-                                                (disponibilidadesPorEvento[event.id] || []).map(disp => {
-                                                    const name = musicianNames[disp.musicoId];
-                                                    return (
-                                                        <div key={disp.id} className={styles.availabilityItem}>
-                                                            <FiPackage
-                                                                className={`${styles.statusIcon} ${disp.status === 'disponivel' ? styles.available : styles.unavailable}`}
+
+                                                    <FiChevronDown
+                                                        className={`${styles.arrowIcon} ${isSelected ? styles.rotated : ''
+                                                            }`}
+                                                    />
+                                                </div>
+
+                                                {/* Botão de deletar */}
+                                                <div className={styles.cardActions}>
+                                                    <button
+                                                        onClick={(e) =>
+                                                            handleDeleteClick(event.id, e)
+                                                        }
+                                                        className={styles.deleteButtonInside}
+                                                    >
+                                                        <FiTrash2 size={16} />
+                                                        <span>Deletar</span>
+                                                    </button>
+                                                </div>
+
+                                                <ModalDelete
+                                                    isOpen={modalOpen}
+                                                    onClose={() => setModalOpen(false)}
+                                                    onConfirm={() => {
+                                                        deleteEvent(eventIdToDelete);
+                                                        setModalOpen(false);
+                                                    }}
+                                                    message="Tem certeza que deseja deletar este evento?"
+                                                />
+
+                                                {/* Dropdown apenas se selecionado */}
+                                                {isSelected && (
+                                                    <div
+                                                        className={styles.availabilityDropdown}
+                                                    >
+                                                        <div
+                                                            className={styles.availabilityHeader}
+                                                        >
+                                                            <FiUsers
+                                                                className={styles.availabilityIcon}
                                                             />
-                                                            <span className={styles.userEmail}>
-                                                                {name || `ID: ${disp.musicoId}`}
+                                                            <span>
+                                                                Disponibilidades (
+                                                                {(
+                                                                    disponibilidadesPorEvento[
+                                                                    event.id
+                                                                    ] || []
+                                                                ).length}
+                                                                )
                                                             </span>
                                                         </div>
-                                                    );
-                                                })
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
 
+                                                        {loadingNames ? (
+                                                            [...Array(
+                                                                Math.max(
+                                                                    3,
+                                                                    (
+                                                                        disponibilidadesPorEvento[
+                                                                        event.id
+                                                                        ] || []
+                                                                    ).length
+                                                                )
+                                                            )].map((_, index) => (
+                                                                <div
+                                                                    key={`skeleton-${index}`}
+                                                                    className={
+                                                                        styles.skeletonItem
+                                                                    }
+                                                                >
+                                                                    <div
+                                                                        className={
+                                                                            styles.skeletonIcon
+                                                                        }
+                                                                    ></div>
+                                                                    <div
+                                                                        className={
+                                                                            styles.skeletonText
+                                                                        }
+                                                                    ></div>
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            (
+                                                                disponibilidadesPorEvento[
+                                                                event.id
+                                                                ] || []
+                                                            ).map((disp) => {
+                                                                const name =
+                                                                    musicianNames[
+                                                                    disp.musicoId
+                                                                    ];
+                                                                return (
+                                                                    <div
+                                                                        key={disp.id}
+                                                                        className={
+                                                                            styles.availabilityItem
+                                                                        }
+                                                                    >
+                                                                        <FiPackage
+                                                                            className={`${styles.statusIcon} ${disp.status ===
+                                                                                'disponivel'
+                                                                                ? styles.available
+                                                                                : styles.unavailable
+                                                                                }`}
+                                                                        />
+                                                                        <span
+                                                                            className={
+                                                                                styles.userEmail
+                                                                            }
+                                                                        >
+                                                                            {name ||
+                                                                                `ID: ${disp.musicoId}`}
+                                                                        </span>
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    ))}
                 </div>
             </section>
+
 
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>
